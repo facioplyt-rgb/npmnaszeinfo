@@ -1,159 +1,638 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM V48 | FINAL</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --main: #f59e0b; --dark: #0f172a; --glass: rgba(255, 255, 255, 0.95); }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--dark); height: 100vh; overflow: hidden; position: fixed; width: 100%; }
-        #map { height: 100%; width: 100%; z-index: 1; filter: contrast(1.05) saturate(1.1); }
-        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); }
-        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform: translateY(110%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); max-width: 550px; margin: 0 auto; border-radius: 40px 40px 0 0; padding: 32px; box-shadow: 0 -20px 50px rgba(0,0,0,0.2); }
-        .sheet.open { transform: translateY(0); }
-        .custom-marker { width: 60px; height: 60px; border-radius: 22px; border: 4px solid #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .pulse { animation: p 2s infinite; }
-        @keyframes p { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .btn-press:active { transform: scale(0.95); }
-        .notif-active { background: var(--main) !important; color: white !important; border-color: var(--main) !important; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RADAR SYSTEM V48 | FULL ARCHITECTURE</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* 1. CORE VARIABLES & THEME */
+        :root { 
+            --main: #f59e0b; 
+            --dark: #0f172a; 
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg-light: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.92);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* 2. RESET & BASE STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--dark); 
+            height: 100vh; 
+            width: 100vw; 
+            overflow: hidden;
+            position: fixed;
+        }
+
+        #map { 
+            height: 100%; 
+            width: 100%; 
+            z-index: 1; 
+            background: #e5e7eb;
+            filter: contrast(1.05) saturate(1.1); 
+        }
+
+        /* 3. WELCOME SCREEN */
+        #city-selector { 
+            position: fixed; 
+            inset: 0; 
+            z-index: 9999; 
+            background: var(--bg-light); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s; 
+        }
+
+        .welcome-card {
+            background: white;
+            padding: 40px;
+            border-radius: 50px;
+            box-shadow: 0 40px 100px -20px rgba(0,0,0,0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* 4. UI COMPONENTS (GLASSMORPHISM) */
+        .glass { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.5); 
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 24px;
+            left: 16px;
+            right: 16px;
+            z-index: 500;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 5. BOTTOM SHEETS & MODALS */
+        .sheet { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            z-index: 1000; 
+            transform: translateY(110%); 
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
+            max-width: 550px; 
+            margin: 0 auto; 
+            border-radius: 40px 40px 0 0;
+            padding: 32px;
+            padding-bottom: calc(32px + var(--safe-bottom));
+            box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
+        }
+        .sheet.open { transform: translateY(0); }
+
+        .sheet-handle {
+            width: 40px;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            margin: -16px auto 24px;
+        }
+
+        /* 6. MARKER STYLES */
+        .custom-marker { 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 22px; 
+            border: 4px solid #fff;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            color: white; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .pulse-red { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 
+            70% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } 
+        }
+
+        .line-badge { 
+            background: rgba(0,0,0,0.3); 
+            padding: 1px 8px; 
+            border-radius: 8px; 
+            font-size: 11px; 
+            font-weight: 900; 
+            margin-top: 2px;
+            text-transform: uppercase;
+        }
+
+        /* 7. ANIMATIONS & BUTTONS */
+        .btn-press { transition: transform 0.2s; cursor: pointer; }
+        .btn-press:active { transform: scale(0.94); }
+
+        .notif-active {
+            background: var(--main) !important;
+            color: white !important;
+            border-color: var(--main) !important;
+            animation: bell-shake 0.5s ease-in-out;
+        }
+        @keyframes bell-shake {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+        }
+
+        .tap-hint-box {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: var(--dark);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 100px;
+            font-weight: 800;
+            border: 3px solid var(--main);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            pointer-events: none;
+            animation: hint-bounce 2s infinite;
+        }
+        @keyframes hint-bounce {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, -70%); }
+        }
+
+        /* 8. LIST SCROLLING */
+        .dir-list {
+            display: grid;
+            gap: 12px;
+            max-height: 35vh;
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-bottom: 20px;
+        }
+        .dir-list::-webkit-scrollbar { width: 4px; }
+        .dir-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .search-input {
+            width: 100%;
+            background: #f1f5f9;
+            border: 3px solid transparent;
+            padding: 18px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .search-input:focus {
+            background: white;
+            border-color: var(--main);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+    </style>
 </head>
 <body>
-    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" preload="auto"></audio>
 
-    <div id="start-screen" class="fixed inset-0 z-[9999] bg-slate-50 flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-12 rounded-[50px] shadow-2xl w-full max-w-sm">
-            <i class="fa-solid fa-tower-broadcast text-7xl text-amber-500 mb-6"></i>
-            <h1 class="text-4xl font-black italic uppercase mb-2">Radar MZK</h1>
-            <p class="text-slate-400 text-[10px] font-bold tracking-[0.3em] mb-10">GORZÓW ENGINE V48</p>
-            <button onclick="boot()" class="w-full py-6 bg-slate-900 text-white rounded-[30px] font-black italic uppercase btn-press">Uruchom</button>
-        </div>
-    </div>
+    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" preload="auto"></audio>
 
-    <div class="fixed top-6 inset-x-4 z-[500] max-w-xl mx-auto pointer-events-none">
-        <div class="glass p-4 rounded-[35px] flex justify-between items-center pointer-events-auto shadow-xl">
-            <div class="flex items-center gap-4 pl-2">
-                <i class="fa-solid fa-satellite-dish text-amber-500 text-xl animate-pulse"></i>
-                <div><h2 class="text-[11px] font-black uppercase text-slate-900">Gorzów Wlkp.</h2><p id="gps" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Szukam GPS...</p></div>
-            </div>
-            <div class="flex gap-2">
-                <button id="radar-btn" onclick="toggleRadar()" class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-400 btn-press border border-slate-100"><i class="fa-solid fa-bell"></i></button>
-                <button onclick="admin()" class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-400 btn-press border border-slate-100"><i class="fa-solid fa-fingerprint"></i></button>
-            </div>
-        </div>
-    </div>
+    <div id="city-selector">
+        <div class="welcome-card">
+            <i class="fa-solid fa-tower-broadcast text-7xl text-amber-500 mb-6 block"></i>
+            <h1 class="text-5xl font-black italic text-slate-900 uppercase tracking-tighter mb-2">System<br>Radar</h1>
+            <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase mb-10">Database Engine v38</p>
+            
+            <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-full p-6 bg-slate-900 text-white rounded-[30px] flex items-center justify-between btn-press shadow-2xl">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div class="text-left">
+                        <span class="block font-extrabold text-xl">Gorzów</span>
+                        <span class="text-[9px] font-bold text-amber-500 uppercase">Chmura aktywna</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right mr-2 opacity-30"></i>
+            </button>
+        </div>
+    </div>
 
-    <div id="map"></div>
+    <div class="top-bar pointer-events-none">
+        <div class="glass p-4 rounded-[35px] flex items-center justify-between shadow-2xl pointer-events-auto">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-slate-900 rounded-[22px] flex items-center justify-center text-amber-400 text-xl shadow-xl">
+                    <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+                </div>
+                <div>
+                    <h2 id="city-title" class="text-xs font-black uppercase text-slate-900 tracking-widest">Inicjalizacja...</h2>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <div id="gps-dot" class="w-2.5 h-2.5 bg-slate-300 rounded-full"></div>
+                        <p id="gps-info" class="text-[9px] text-slate-400 font-black uppercase italic">Oczekiwanie na GPS</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="notif-btn" onclick="toggleSmartRadar()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+                <button onclick="adminLogin()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <div id="fab" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-6 opacity-0 translate-y-10 transition-all duration-700">
-        <button onclick="initReport()" class="w-full max-w-md bg-slate-900 text-white py-8 rounded-[35px] font-black shadow-2xl btn-press border-b-8 border-amber-600 uppercase italic">+ Dodaj Zgłoszenie</button>
-    </div>
+    <div id="map"></div>
 
-    <div id="sheet-type" class="sheet glass">
-        <div class="grid grid-cols-3 gap-4">
-            <button onclick="setT('KONTROLA', 'fa-user-secret', '#ef4444')" class="flex flex-col items-center gap-4 p-8 bg-red-50 rounded-[35px] text-red-600 btn-press border-2 border-red-100"><i class="fa-solid fa-user-secret text-4xl"></i><span class="text-[9px] font-black uppercase">Bilety</span></button>
-            <button onclick="setT('AWARIA', 'fa-triangle-exclamation', '#f59e0b')" class="flex flex-col items-center gap-4 p-8 bg-orange-50 rounded-[35px] text-orange-600 btn-press border-2 border-orange-100"><i class="fa-solid fa-triangle-exclamation text-4xl"></i><span class="text-[9px] font-black uppercase">Awaria</span></button>
-            <button onclick="setT('KOREK', 'fa-clock', '#3b82f6')" class="flex flex-col items-center gap-4 p-8 bg-blue-50 rounded-[35px] text-blue-600 btn-press border-2 border-blue-100"><i class="fa-solid fa-clock text-4xl"></i><span class="text-[9px] font-black uppercase">Korek</span></button>
-        </div>
-    </div>
+    <div id="fab-container" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-6 opacity-0 pointer-events-none transition-all duration-1000">
+        <button onclick="initReportFlow()" class="w-full max-w-md bg-slate-900 text-white py-8 rounded-[35px] font-black text-sm tracking-[0.2em] shadow-[0_25px_60px_rgba(0,0,0,0.4)] flex items-center justify-center gap-4 btn-press border-b-8 border-amber-600 uppercase italic">
+            <i class="fa-solid fa-plus-circle text-2xl text-amber-500"></i> Dodaj do Radaru
+        </button>
+    </div>
 
-    <div id="sheet-form" class="sheet glass">
-        <div class="flex gap-4 mb-6"><input type="text" id="ln" placeholder="00" class="w-1/4 p-6 bg-slate-100 rounded-[28px] font-black text-2xl text-center outline-none"><input type="text" id="sr" placeholder="Kierunek..." class="w-3/4 p-6 bg-slate-100 rounded-[28px] font-bold outline-none" oninput="sch()"></div>
-        <div id="dl" class="grid gap-2 max-h-[30vh] overflow-y-auto mb-8 pr-2"></div>
-        <button onclick="send()" class="w-full bg-amber-500 text-white p-7 rounded-[30px] font-black uppercase shadow-xl border-b-8 border-amber-600 btn-press">Opublikuj</button>
-    </div>
+    <div id="sheet-type" class="sheet glass">
+        <div class="sheet-handle"></div>
+        <h3 class="text-center font-black uppercase text-[10px] tracking-widest text-slate-400 mb-8">Kategoria zgłoszenia</h3>
+        <div class="grid grid-cols-3 gap-4">
+            <button onclick="selectType('KONTROLA', 'fa-user-secret', 'red')" class="flex flex-col items-center gap-4 p-8 bg-red-50 rounded-[35px] text-red-600 btn-press border-2 border-red-100 shadow-sm">
+                <i class="fa-solid fa-user-secret text-4xl"></i>
+                <span class="text-[9px] font-black uppercase">Bilety</span>
+            </button>
+            <button onclick="selectType('AWARIA', 'fa-triangle-exclamation', 'orange')" class="flex flex-col items-center gap-4 p-8 bg-orange-50 rounded-[35px] text-orange-600 btn-press border-2 border-orange-100 shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation text-4xl"></i>
+                <span class="text-[9px] font-black uppercase">Awaria</span>
+            </button>
+            <button onclick="selectType('KOREK', 'fa-clock', 'blue')" class="flex flex-col items-center gap-4 p-8 bg-blue-50 rounded-[35px] text-blue-600 btn-press border-2 border-blue-100 shadow-sm">
+                <i class="fa-solid fa-clock text-4xl"></i>
+                <span class="text-[9px] font-black uppercase">Korek</span>
+            </button>
+        </div>
+        <button onclick="closeAllSheets()" class="w-full mt-8 py-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">Anuluj Operację</button>
+    </div>
 
-    <div id="sheet-vote" class="sheet glass text-center">
-        <div id="vi" class="text-8xl mb-4"></div><h2 id="vt" class="text-3xl font-black italic uppercase text-slate-900"></h2><p id="vl" class="text-amber-500 font-black text-5xl mb-8"></p>
-        <div class="bg-slate-50 p-6 rounded-[35px] border-2 border-slate-100 mb-8"><p id="vs" class="font-black text-[11px] text-slate-500 uppercase"></p></div>
-        <div class="grid grid-cols-2 gap-4"><button id="v-ok" class="bg-slate-900 text-white p-6 rounded-[30px] font-black uppercase italic btn-press shadow-xl">Potwierdzam</button><button onclick="cls()" class="bg-white text-slate-400 p-6 rounded-[30px] font-black uppercase border-2 border-slate-100 btn-press">Błąd</button></div>
-    </div>
+    <div id="sheet-details" class="sheet glass">
+        <div class="sheet-handle"></div>
+        <div class="flex justify-between items-center mb-8">
+            <button onclick="openSheet('sheet-type')" class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-900 btn-press shadow-sm">
+                <i class="fa-solid fa-arrow-left text-xl"></i>
+            </button>
+            <h2 class="text-2xl font-black italic text-slate-900 uppercase">Szczegóły</h2>
+            <div class="w-14"></div>
+        </div>
 
-    <div id="ab" class="hidden fixed inset-0 z-[10000] bg-white p-8 overflow-y-auto">
-        <h2 class="text-3xl font-black mb-6 uppercase italic">Baza Kierunków</h2>
-        <textarea id="ai" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[35px] p-6 font-bold mb-6 outline-none"></textarea>
-        <button onclick="svA()" class="w-full bg-slate-900 text-white p-8 rounded-[35px] font-black uppercase btn-press">Zapisz</button>
-        <button onclick="toggleA(false)" class="w-full mt-4 text-slate-400 font-bold uppercase text-[10px]">Zamknij</button>
-    </div>
+        <div class="flex gap-4 mb-6">
+            <div class="w-1/3">
+                <label class="block text-[8px] font-black text-slate-400 uppercase mb-2 ml-4">Numer</label>
+                <input type="text" id="in-line" placeholder="00" class="w-full bg-slate-100 p-6 rounded-[25px] font-black text-2xl text-center outline-none border-4 border-transparent focus:border-amber-500 shadow-inner">
+            </div>
+            <div class="w-2/3">
+                <label class="block text-[8px] font-black text-slate-400 uppercase mb-2 ml-4">Wybierz Kierunek</label>
+                <input type="text" id="search-dir" placeholder="Szukaj..." class="search-input" oninput="filterDirections()">
+            </div>
+        </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
-        
-        const fC = { apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M", authDomain: "mzk-by-facio.firebaseapp.com", databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mzk-by-facio", storageBucket: "mzk-by-facio.appspot.com", messagingSenderId: "676970411647", appId: "1:676970411647:web:5703d5fb5fb499ff83714a" };
-        const app = initializeApp(fC); const db = getDatabase(app);
-        const map = L.map('map', { zoomControl: false, attributionControl: false });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+        <div id="dir-list" class="dir-list">
+            </div>
 
-        let uP = null, rA = false, cM = {}, sts = [], tC = null, tM = null, sT = {};
-        const uid = localStorage.getItem('r_uid_v48') || Math.random().toString(36).substr(2, 12);
-        localStorage.setItem('r_uid_v48', uid);
+        <button id="btn-submit" onclick="submitToFirebase()" class="w-full bg-amber-500 text-white p-7 rounded-[30px] font-black text-sm tracking-widest uppercase btn-press shadow-xl border-b-8 border-amber-600">
+            Wyślij do bazy v38
+        </button>
+    </div>
 
-        window.boot = () => { document.getElementById('start-screen').remove(); document.getElementById('fab').style.opacity = '1'; document.getElementById('fab').style.transform = 'translateY(0)'; map.setView([52.732, 15.237], 14); map.locate({ watch: true, enableHighAccuracy: true }); };
+    <div id="sheet-vote" class="sheet glass text-center">
+        <div class="sheet-handle"></div>
+        <div id="v-icon-box" class="text-8xl mb-4 drop-shadow-2xl"></div>
+        <h3 id="v-title" class="text-3xl font-black italic text-slate-900 mb-1 uppercase tracking-tight"></h3>
+        <p id="v-line" class="text-amber-500 font-black text-4xl mb-8 drop-shadow-sm"></p>
+        
+        <div class="bg-slate-50 rounded-[35px] p-8 mb-8 grid grid-cols-3 gap-2 border-2 border-slate-100">
+            <div><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p><p id="v-status" class="text-[10px] font-black text-green-500">Aktywny</p></div>
+            <div class="border-x border-slate-200"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Głosy</p><p id="v-votes" class="text-xl font-black text-slate-900">0</p></div>
+            <div><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Czas</p><p id="v-time" class="text-[10px] font-black text-slate-600">-</p></div>
+        </div>
+        
+        <div class="mb-10">
+            <p id="v-dir" class="text-slate-800 font-extrabold text-lg leading-tight uppercase italic"></p>
+            <p id="v-street" class="text-slate-400 font-bold text-[10px] mt-2 uppercase tracking-widest"></p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <button id="btn-vote-up" class="bg-slate-900 text-white p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-xl border-b-8 border-slate-700 italic">Potwierdzam</button>
+            <button onclick="closeAllSheets()" class="bg-white text-slate-400 p-7 rounded-[30px] font-black text-xs uppercase btn-press border-2 border-slate-100">Błąd / Brak</button>
+        </div>
+        <button id="btn-delete" class="hidden w-full mt-6 p-2 text-red-400 font-bold text-[10px] uppercase tracking-widest hover:text-red-600 transition-colors">Usuń moje zgłoszenie</button>
+    </div>
 
-        map.on('locationfound', (e) => { 
-            uP = e.latlng; 
-            document.getElementById('gps').innerText = "GPS AKTYWNY"; 
-            document.getElementById('gps').style.color = "#10b981";
-            if(!window.uL) window.uL = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
-            else window.uL.setLatLng(e.latlng);
-        });
+    <div id="admin-panel" class="hidden fixed inset-0 z-[10000] bg-white p-8 overflow-y-auto">
+        <div class="max-w-xl mx-auto">
+            <h2 class="text-4xl font-black italic uppercase text-slate-900 mb-8">Konfiguracja v38</h2>
+            <p class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Lista Kierunków (linia po linii):</p>
+            <textarea id="admin-data" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[35px] p-8 font-bold text-slate-700 mb-6 outline-none focus:border-amber-500 shadow-inner"></textarea>
+            <button onclick="saveAdminData()" class="w-full bg-slate-900 text-white p-8 rounded-[35px] font-black btn-press shadow-2xl mb-4 border-b-8 border-slate-700 italic uppercase">Synchronizuj Bazę</button>
+            <button onclick="toggleAdmin(false)" class="w-full p-4 text-slate-400 font-bold text-[10px] uppercase">Zamknij</button>
+        </div>
+    </div>
 
-        window.toggleRadar = async () => { 
-            if ("Notification" in window) await Notification.requestPermission(); 
-            rA = !rA; 
-            document.getElementById('radar-btn').classList.toggle('notif-active', rA); 
-            alert(rA ? "Smart Radar Włączony" : "Radar Wyłączony"); 
-        };
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-        onValue(ref(db, `v38/gorzow/alerts`), (snap) => {
-            const data = snap.val() || {};
-            Object.keys(cM).forEach(id => { if(!data[id]) { map.removeLayer(cM[id]); delete cM[id]; }});
-            Object.entries(data).forEach(([id, val]) => {
-                if(!cM[id]) {
-                    const color = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f59e0b' : '#3b82f6');
-                    const h = `<div class="custom-marker ${val.type==='KONTROLA'?'pulse':''}" style="background:${color}"><i class="fa-solid ${val.icon} text-xl"></i><div class="line-badge font-black text-[10px] mt-1 uppercase bg-black/20 px-2 rounded">${val.line}</div></div>`;
-                    cM[id] = L.marker([val.lat, val.lng], { icon: L.divIcon({ className: '', html: h, iconAnchor: [30, 30] }) }).addTo(map).on('click', () => openV(id, val));
-                    if(rA && uP && uP.distanceTo(L.latLng(val.lat, val.lng)) < 500) {
-                        new Notification(`Radar: ${val.type}`, { body: `Linia ${val.line} w Twojej okolicy!` });
-                        document.getElementById('alert-sound').play().catch(()=>{});
-                    }
-                }
-            });
-        });
+        // CONFIG BAZY
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
+            authDomain: "mzk-by-facio.firebaseapp.com",
+            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "mzk-by-facio",
+            storageBucket: "mzk-by-facio.appspot.com",
+            messagingSenderId: "676970411647",
+            appId: "1:676970411647:web:5703d5fb5fb499ff83714a"
+        };
 
-        onValue(ref(db, `v38/gorzow/config`), (s) => { sts = s.val() || []; dDs(sts); });
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        window.initReport = () => { map.once('click', (e) => { tC = e.latlng; if(tM) map.removeLayer(tM); tM = L.circle(e.latlng, { radius: 30, color: '#f59e0b' }).addTo(map); openS('sheet-type'); }); };
-        window.setT = (t, i, c) => { sT = { type: t, icon: i, color: c }; openS('sheet-form'); };
-        
-        window.send = async () => {
-            const l = document.getElementById('ln').value || "??", d = document.getElementById('sr').value || "---";
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${tC.lat}&lon=${tC.lng}`);
-            const dj = await res.json(); const street = dj.address.road || dj.address.suburb || "Gorzów";
-            push(ref(db, `v38/gorzow/alerts`), { ...sT, line: l, dir: d, street: street, lat: tC.lat, lng: tC.lng, author: uid, createdAt: Date.now(), votes: 1 });
-            cls(); if(tM) map.removeLayer(tM);
-        };
+        // INITIAL STATE
+        let currentCity = '';
+        let userLatLng = null;
+        let selectedType = { type: '', icon: '', color: '' };
+        let tempMarker = null;
+        let tempCoords = null;
+        let cityConfig = [];
+        let radarActive = false;
+        let processedAlerts = new Set();
+        let markerMap = {};
+        const deviceID = localStorage.getItem('radar_uid_v48') || Math.random().toString(36).substr(2, 15);
+        localStorage.setItem('radar_uid_v48', deviceID);
 
-        window.openV = (id, val) => {
-            openS('sheet-vote'); document.getElementById('vi').innerHTML = `<i class="fa-solid ${val.icon}" style="color:${val.color}"></i>`;
-            document.getElementById('vt').innerText = val.type; document.getElementById('vl').innerText = val.line; document.getElementById('vs').innerText = `${val.street} | Kierunek: ${val.dir}`;
-            document.getElementById('v-ok').onclick = () => { update(ref(db, `v38/gorzow/alerts/${id}`), { votes: increment(1) }); cls(); };
-        };
+        // MAPA
+        const map = L.map('map', { 
+            zoomControl: false, 
+            attributionControl: false, 
+            tap: false,
+            bounceAtZoomLimits: false 
+        });
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        window.openS = (id) => { cls(); document.getElementById(id).classList.add('open'); };
-        window.cls = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
-        window.dDs = (l) => { document.getElementById('dl').innerHTML = l.map(d => `<button onclick="document.getElementById('sr').value='${d}'" class="w-full text-left p-5 bg-white border rounded-[22px] font-bold btn-press">${d}</button>`).join(''); };
-        window.sch = () => dDs(sts.filter(s => s.toLowerCase().includes(document.getElementById('sr').value.toLowerCase())));
-        window.admin = () => { if(prompt("Kod:") === "mzk2026") toggleA(true); };
-        window.toggleA = (s) => { document.getElementById('ab').classList.toggle('hidden', !s); if(s) document.getElementById('ai').value = sts.join('\n'); };
-        window.svA = () => { const l = document.getElementById('ai').value.split('\n').filter(x => x.trim()); set(ref(db, `v38/gorzow/config`), l).then(() => toggleA(false)); };
-    </script>
+        // --- FUNKCJE POMOCNICZE ---
+        const getRelativeTime = (ts) => {
+            const diff = Math.floor((Date.now() - ts) / 60000);
+            if (diff < 1) return "Teraz";
+            if (diff < 60) return `${diff} min temu`;
+            return `${Math.floor(diff/60)} godz temu`;
+        };
+
+        const reverseGeocode = async (lat, lon) => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18`);
+                const data = await res.json();
+                return data.address.road || data.address.suburb || "Trasa przejazdu";
+            } catch { return "Lokalizacja w trasie"; }
+        };
+
+       <style>
+    /* Usunąłem stary kod toastów, o który prosiłeś */
+    .notif-active {
+        background: #f59e0b !important;
+        color: white !important;
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+    /* ... reszta stylów z V48 ... */
+</style>
+
+<div class="top-bar">
+    <div class="glass p-4 rounded-[35px] flex justify-between items-center shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 bg-slate-900 rounded-[22px] flex items-center justify-center text-amber-400">
+                <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+            </div>
+            <div>
+                <h2 id="city-title" class="text-xs font-black uppercase text-slate-900">Gorzów</h2>
+                <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase italic tracking-widest">Czekam na lokalizację...</p>
+            </div>
+        </div>
+        <button id="notif-btn" onclick="toggleSmartRadar()" class="w-14 h-14 bg-white border border-slate-100 rounded-[22px] flex items-center justify-center text-slate-400 btn-press text-xl">
+            <i class="fa-solid fa-bell"></i>
+        </button>
+    </div>
+</div>
+
+        const runRadarCheck = (alerts) => {
+            if (!radarActive || !userLatLng) return;
+            
+            Object.entries(alerts).forEach(([id, alert]) => {
+                const distance = userLatLng.distanceTo(L.latLng(alert.lat, alert.lng));
+                
+                if (distance < 500 && !processedAlerts.has(id)) {
+                    processedAlerts.add(id);
+                    
+                    new Notification(`🚨 RADAR: ${alert.type}`, {
+                        body: `Linia ${alert.line}, ok. ${Math.round(distance)}m od Ciebie. Kierunek: ${alert.dir}`,
+                        icon: 'https://cdn-icons-png.flaticon.com/512/821/821326.png'
+                    });
+                    
+                    document.getElementById('alert-sound').play().catch(()=>{});
+                    
+                    // Resetuj możliwość powiadomienia o tym samym punkcie po 10 min
+                    setTimeout(() => processedAlerts.delete(id), 600000);
+                }
+            });
+        };
+
+        // --- CORE LOGIC: START ---
+        window.startApp = (city, coords) => {
+            currentCity = city;
+            document.getElementById('city-selector').style.opacity = '0';
+            setTimeout(() => document.getElementById('city-selector').style.visibility = 'hidden', 800);
+            
+            // UI Init
+            document.getElementById('fab-container').style.opacity = '1';
+            document.getElementById('fab-container').style.pointerEvents = 'auto';
+            document.getElementById('fab-container').style.transform = 'translateY(0)';
+            document.getElementById('city-title').innerText = city.toUpperCase();
+            
+            map.setView(coords, 14);
+            map.locate({ watch: true, setView: false, maxZoom: 16 });
+
+            // Nasłuch bazy: Alerty
+            onValue(ref(db, `v38/${currentCity}/alerts`), (snapshot) => {
+                const data = snapshot.val() || {};
+                
+                // Czyść usunięte
+                Object.keys(markerMap).forEach(id => {
+                    if (!data[id]) {
+                        map.removeLayer(markerMap[id]);
+                        delete markerMap[id];
+                    }
+                });
+
+                // Dodaj/Aktualizuj
+                Object.entries(data).forEach(([id, val]) => {
+                    if (!markerMap[id]) {
+                        const colorCode = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f59e0b' : '#3b82f6');
+                        const iconHtml = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${colorCode}">
+                            <i class="fa-solid ${val.icon} text-2xl"></i>
+                            <div class="line-badge">${val.line}</div>
+                        </div>`;
+                        
+                        markerMap[id] = L.marker([val.lat, val.lng], {
+                            icon: L.divIcon({ className: '', html: iconHtml, iconAnchor: [30, 30] })
+                        }).addTo(map).on('click', () => openVoteSheet(id, val));
+                    }
+                });
+
+                runRadarCheck(data);
+            });
+
+            // Nasłuch bazy: Kierunki
+            onValue(ref(db, `v38/${currentCity}/config`), (snapshot) => {
+                cityConfig = snapshot.val() || [];
+                renderDirections(cityConfig);
+            });
+        };
+
+        // GPS
+        map.on('locationfound', (e) => {
+            userLatLng = e.latlng;
+            document.getElementById('gps-info').innerText = "Sygnał GPS aktywny";
+            document.getElementById('gps-info').style.color = "#10b981";
+            document.getElementById('gps-dot').className = "w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_10px_#10b981]";
+            
+            if (!window.userCircle) {
+                window.userCircle = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
+            } else {
+                window.userCircle.setLatLng(e.latlng);
+            }
+        });
+
+        // --- ZGŁASZANIE ---
+        window.initReportFlow = () => {
+            const hint = document.createElement('div');
+            hint.className = "tap-hint-box";
+            hint.id = "tap-hint";
+            hint.innerText = "Wskaż punkt na mapie";
+            document.body.appendChild(hint);
+            
+            map.once('click', (e) => {
+                tempCoords = e.latlng;
+                document.getElementById('tap-hint').remove();
+                if(tempMarker) map.removeLayer(tempMarker);
+                tempMarker = L.circle(e.latlng, { radius: 30, color: '#f59e0b', weight: 4, fillOpacity: 0.3 }).addTo(map);
+                openSheet('sheet-type');
+            });
+        };
+
+        window.selectType = (type, icon, color) => {
+            selectedType = { type, icon, color };
+            openSheet('sheet-details');
+        };
+
+        window.submitToFirebase = async () => {
+            const line = document.getElementById('in-line').value.trim() || "??";
+            const dir = document.getElementById('search-dir').value.trim() || "Nieznany";
+            const street = await reverseGeocode(tempCoords.lat, tempCoords.lng);
+            
+            const newAlertRef = push(ref(db, `v38/${currentCity}/alerts`));
+            set(newAlertRef, {
+                ...selectedType,
+                line: line,
+                dir: dir,
+                street: street,
+                lat: tempCoords.lat,
+                lng: tempCoords.lng,
+                author: deviceID,
+                createdAt: Date.now(),
+                lastVote: Date.now(),
+                votes: 1
+            }).then(() => {
+                closeAllSheets();
+                if(tempMarker) map.removeLayer(tempMarker);
+            });
+        };
+
+        // --- GŁOSOWANIE ---
+        window.openVoteSheet = (id, data) => {
+            openSheet('sheet-vote');
+            const color = data.type === 'KONTROLA' ? 'text-red-500' : (data.type === 'AWARIA' ? 'text-orange-500' : 'text-blue-500');
+            document.getElementById('v-icon-box').innerHTML = `<i class="fa-solid ${data.icon} ${color}"></i>`;
+            document.getElementById('v-title').innerText = data.type;
+            document.getElementById('v-line').innerText = data.line;
+            document.getElementById('v-dir').innerText = data.dir;
+            document.getElementById('v-street').innerText = data.street;
+            document.getElementById('v-votes').innerText = data.votes;
+            document.getElementById('v-time').innerText = getRelativeTime(data.createdAt);
+            
+            document.getElementById('btn-vote-up').onclick = () => {
+                update(ref(db, `v38/${currentCity}/alerts/${id}`), {
+                    votes: increment(1),
+                    lastVote: Date.now()
+                });
+                closeAllSheets();
+            };
+
+            const delBtn = document.getElementById('btn-delete');
+            if (data.author === deviceID) {
+                delBtn.classList.remove('hidden');
+                delBtn.onclick = () => { remove(ref(db, `v38/${currentCity}/alerts/${id}`)); closeAllSheets(); };
+            } else {
+                delBtn.classList.add('hidden');
+            }
+        };
+
+        // --- UI HELPERS ---
+        window.openSheet = (id) => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById(id).classList.add('open');
+            document.getElementById('fab-container').style.opacity = '0';
+        };
+
+        window.closeAllSheets = () => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById('fab-container').style.opacity = '1';
+        };
+
+        const renderDirections = (list) => {
+            const container = document.getElementById('dir-list');
+            container.innerHTML = list.map(d => `
+                <button onclick="document.getElementById('search-dir').value='${d}'" class="w-full bg-white p-6 rounded-[25px] text-left font-bold text-slate-700 btn-press border border-slate-50 shadow-sm flex justify-between items-center">
+                    <span>${d}</span>
+                    <i class="fa-solid fa-chevron-right text-slate-200"></i>
+                </button>
+            `).join('');
+        };
+
+        window.filterDirections = () => {
+            const q = document.getElementById('search-dir').value.toLowerCase();
+            renderDirections(cityConfig.filter(d => d.toLowerCase().includes(q)));
+        };
+
+        // --- ADMIN ---
+        window.adminLogin = () => { if(prompt("Hasło operatora:") === "mzk2026") toggleAdmin(true); };
+        window.toggleAdmin = (s) => {
+            document.getElementById('admin-panel').classList.toggle('hidden', !s);
+            if(s) document.getElementById('admin-data').value = cityConfig.join('\n');
+        };
+        window.saveAdminData = () => {
+            const lines = document.getElementById('admin-data').value.split('\n').filter(l => l.trim() !== "");
+            set(ref(db, `v38/${currentCity}/config`), lines).then(() => { alert("Zapisano!"); toggleAdmin(false); });
+        };
+    </script>
 </body>
 </html>
