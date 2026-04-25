@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR SYSTEM V42 | FULL RESTORED</title>
+    <title>RADAR SYSTEM V43 | V38 DATABASE LINK</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -102,7 +102,8 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             transition: transform 0.2s;
         }
-        
+        .custom-marker:active { transform: scale(0.9); }
+
         .pulse-red { animation: pulse-red 1.5s infinite; }
         @keyframes pulse-red { 
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); } 
@@ -117,6 +118,7 @@
             font-size: 11px; 
             font-weight: 800; 
             margin-top: 2px;
+            letter-spacing: -0.5px;
         }
         
         /* BUTTONS & INTERACTIONS */
@@ -170,7 +172,7 @@
                 <div class="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <h1 class="text-5xl font-black italic tracking-tighter text-slate-900 uppercase">System Radar</h1>
-            <p class="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase mt-2">Gorzów Wlkp. | Edycja V42</p>
+            <p class="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase mt-2">Gorzów Wlkp. | Edycja V43 (v38 DB)</p>
         </div>
 
         <div class="space-y-4 w-full max-w-xs">
@@ -185,20 +187,28 @@
                     </span>
                 </div>
             </button>
+
+            <button class="w-full p-8 bg-slate-100/50 border-2 border-slate-100 rounded-[40px] flex items-center gap-6 opacity-60 grayscale cursor-not-allowed">
+                <div class="w-16 h-16 bg-slate-300 text-slate-500 rounded-3xl flex items-center justify-center text-3xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div class="text-left">
+                    <span class="block font-black text-slate-400 text-2xl tracking-tight">Inne</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase">Wkrótce...</span>
+                </div>
+            </button>
         </div>
     </div>
 
     <div id="radar-toast" class="glass rounded-[35px] p-6 flex items-center gap-5 border-l-[12px] border-amber-500 shadow-2xl">
-        <div id="toast-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-amber-100 text-amber-600 shadow-inner">
-            <i class="fa-solid fa-rss animate-spin"></i>
-        </div>
+        <div id="toast-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-amber-100 text-amber-600 shadow-inner"></div>
         <div class="flex-1">
             <div class="flex justify-between items-center mb-1">
-                <h4 class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Wykryto Zdarzenie</h4>
+                <h4 class="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Alert Zbliżeniowy</h4>
                 <span id="toast-dist" class="bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black italic">0m</span>
             </div>
-            <p id="toast-type-label" class="text-[10px] font-black text-slate-400 uppercase mb-1">Typ zdarzenia</p>
-            <p id="toast-street" class="text-base font-black text-slate-900 leading-tight">Lokalizacja...</p>
+            <p id="toast-type-label" class="text-[10px] font-black text-slate-400 uppercase mb-1"></p>
+            <p id="toast-street" class="text-base font-black text-slate-900 leading-tight"></p>
             <p id="toast-dir" class="text-[11px] font-bold text-slate-400 uppercase italic mt-1"></p>
         </div>
         <button onclick="hideToast()" class="text-slate-300 hover:text-slate-600 p-2 text-2xl">✕</button>
@@ -246,7 +256,7 @@
             </button>
             <button onclick="selectType('KOREK', '<i class=\'fa-solid fa-clock\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-blue-50 rounded-[40px] text-blue-600 btn-press border-2 border-blue-100 shadow-sm">
                 <i class="fa-solid fa-clock text-4xl"></i>
-                <span class="text-[10px] font-black uppercase tracking-tighter">Korek</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">Opóźnienie</span>
             </button>
         </div>
     </div>
@@ -256,6 +266,7 @@
             <h2 class="text-4xl font-black italic text-slate-900 uppercase">Dane</h2>
             <p class="text-[9px] font-black text-amber-500 uppercase mb-1">Krok 2/2</p>
         </div>
+        
         <div class="flex gap-4 mb-6">
             <div class="w-1/3">
                 <label class="block text-[9px] font-black text-slate-400 uppercase mb-2 ml-4">Nr Linii</label>
@@ -266,7 +277,10 @@
                 <input type="text" id="search-dir" placeholder="Wpisz lub wybierz..." class="w-full bg-slate-100 p-6 rounded-[30px] font-bold text-slate-700 outline-none border-4 border-transparent focus:border-amber-500 shadow-inner transition-all" oninput="runSearch()">
             </div>
         </div>
-        <div id="list-dirs" class="grid gap-3 max-h-[30vh] overflow-y-auto dir-scroll pr-2 mb-8"></div>
+
+        <div id="list-dirs" class="grid gap-3 max-h-[30vh] overflow-y-auto dir-scroll pr-2 mb-8">
+            </div>
+
         <button onclick="submitFormManual()" class="w-full bg-amber-500 text-white p-7 rounded-[35px] font-black text-sm tracking-widest uppercase btn-press shadow-[0_15px_30px_rgba(245,158,11,0.3)] mb-4">
             Potwierdź i Wyślij <i class="fa-solid fa-paper-plane ml-2"></i>
         </button>
@@ -277,6 +291,7 @@
         <div id="v-icon" class="text-8xl mb-6 drop-shadow-2xl"></div>
         <h3 id="v-title" class="text-4xl font-black italic text-slate-900 mb-2 uppercase"></h3>
         <p id="v-line" class="text-amber-500 font-black text-3xl mb-8 drop-shadow-sm"></p>
+        
         <div class="bg-slate-50 rounded-[35px] p-8 mb-10 grid grid-cols-2 gap-8 border-2 border-slate-100 shadow-inner">
             <div class="border-r border-slate-200">
                 <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Zgłoszono</p>
@@ -287,10 +302,13 @@
                 <p id="v-last" class="text-sm font-black text-slate-800 italic">-</p>
             </div>
         </div>
+        
         <div class="mb-10 px-4">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Lokalizacja / Kierunek</p>
             <p id="v-dir" class="text-slate-700 font-bold text-lg leading-tight uppercase italic"></p>
             <p id="v-street" class="text-slate-400 font-bold text-[10px] mt-2"></p>
         </div>
+        
         <div class="grid grid-cols-2 gap-5 mb-6">
             <button id="v-ok" class="bg-slate-900 text-white p-7 rounded-[35px] font-black text-xs uppercase btn-press shadow-xl border-b-8 border-slate-700 italic">Nadal Jest!</button>
             <button onclick="closeModals()" class="bg-white text-slate-400 p-7 rounded-[35px] font-black text-xs uppercase btn-press border-2 border-slate-100 shadow-sm">Zniknęło</button>
@@ -300,10 +318,13 @@
 
     <div id="admin-view" class="hidden fixed inset-0 z-[10000] bg-white p-10 overflow-y-auto">
         <div class="max-w-xl mx-auto mt-10">
-            <h2 class="text-5xl font-black italic uppercase text-slate-900 mb-12">Baza Kierunków</h2>
-            <textarea id="admin-input" rows="12" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[40px] p-10 font-bold text-slate-700 mb-8 outline-none focus:border-amber-500 shadow-inner" placeholder="Wpisz przystanki..."></textarea>
-            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-9 rounded-[40px] font-black btn-press shadow-2xl mb-4 border-b-8 border-slate-700 italic uppercase italic">Zsynchronizuj chmurę</button>
-            <button onclick="toggleAdminView(false)" class="w-full p-6 text-slate-400 font-black text-[10px] uppercase tracking-widest">Zamknij panel</button>
+            <div class="flex items-center justify-between mb-12">
+                <h2 class="text-5xl font-black italic uppercase text-slate-900">Baza<br><span class="text-amber-500 text-2xl tracking-widest not-italic">Cloud RTDB</span></h2>
+                <i class="fa-solid fa-database text-5xl text-slate-100"></i>
+            </div>
+            <textarea id="admin-input" rows="12" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[40px] p-10 font-bold text-slate-700 mb-8 outline-none focus:border-amber-500 focus:bg-white transition-all shadow-inner placeholder:text-slate-300" placeholder="Przykład:&#10;Górczyn&#10;Wieprzyce&#10;Piaski"></textarea>
+            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-9 rounded-[40px] font-black text-sm tracking-[0.3em] btn-press shadow-2xl mb-4 border-b-8 border-slate-700 italic">Zsynchronizuj z Chmurą</button>
+            <button onclick="toggleAdminView(false)" class="w-full p-6 text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Zamknij Panel Zarządzania</button>
         </div>
     </div>
 
@@ -312,6 +333,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -325,9 +347,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        const map = L.map('map', { zoomControl: false, attributionControl: false, tap: false });
+        // --- MAP SETUP ---
+        const map = L.map('map', { 
+            zoomControl: false, 
+            attributionControl: false, 
+            tap: false,
+            bounceAtZoomLimits: true
+        });
+        
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
+        // --- GLOBAL STATE ---
         let cityKey = '';
         let uPos = null;
         let sType = '';
@@ -336,67 +366,96 @@
         let tCoords = null;
         let masterDirs = [];
         const mCache = {};
-        const uid = localStorage.getItem('mzk_uid_v42') || Math.random().toString(36).substr(2, 12);
-        localStorage.setItem('mzk_uid_v42', uid);
+        
+        // Persist User ID
+        const uid = localStorage.getItem('mzk_uid_v43') || Math.random().toString(36).substr(2, 12);
+        localStorage.setItem('mzk_uid_v43', uid);
 
+        // --- UTILS ---
         function timeAgo(ts) {
-            if(!ts) return "-";
+            if(!ts) return "Brak danych";
             const diff = Math.floor((Date.now() - ts) / 60000);
-            return diff < 1 ? "Przed chwilą" : (diff < 60 ? `${diff}m temu` : `${Math.floor(diff/60)}h temu`);
+            if(diff < 1) return "Przed chwilą";
+            if(diff < 60) return `${diff} min temu`;
+            return `${Math.floor(diff/60)} godz temu`;
         }
 
         async function getRoadName(la, ln) {
             try {
                 const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${la}&lon=${ln}&zoom=18`);
                 const d = await r.json();
-                return d.address.road || d.address.pedestrian || d.address.suburb || "Ulica nieznana";
+                return d.address.road || d.address.pedestrian || d.address.suburb || "Droga publiczna";
             } catch { return "Lokalizacja nieznana"; }
         }
 
+        // --- CORE APP FLOW ---
         window.startApp = (key, coords) => {
             cityKey = key;
-            document.getElementById('city-selector').style.display = 'none';
-            document.getElementById('fab-container').style.opacity = '1';
-            document.getElementById('fab-container').style.pointerEvents = 'auto';
-            document.getElementById('fab-container').style.transform = 'translateY(0)';
+            const selector = document.getElementById('city-selector');
+            selector.style.display = 'none';
+            
+            const fab = document.getElementById('fab-container');
+            fab.style.opacity = '1';
+            fab.style.pointerEvents = 'auto';
+            fab.style.transform = 'translateY(0)';
+            
             document.getElementById('city-title').innerText = key.toUpperCase();
+            
             map.setView(coords, 14);
             map.locate({ setView: true, maxZoom: 16, watch: true });
 
-            // Nasłuchiwanie ALERTS
-            onValue(ref(db, `v42/${cityKey}/alerts`), (snap) => {
+            // Nasłuchiwanie ALERTS z gałęzi V38
+            onValue(ref(db, `v38/${cityKey}/alerts`), (snap) => {
                 const data = snap.val();
-                const ids = data ? Object.keys(data) : [];
-                Object.keys(mCache).forEach(id => { if(!ids.includes(id)) { map.removeLayer(mCache[id]); delete mCache[id]; }});
+                const currentIds = data ? Object.keys(data) : [];
+                
+                Object.keys(mCache).forEach(id => { 
+                    if(!currentIds.includes(id)) { 
+                        map.removeLayer(mCache[id]); 
+                        delete mCache[id]; 
+                    }
+                });
+                
                 if (data) {
                     Object.entries(data).forEach(([id, val]) => {
                         if (!mCache[id]) {
                             const color = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f97316' : '#2563eb');
-                            const html = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${color}"><div class="text-2xl mt-1">${val.icon}</div><div class="line-badge">${val.line || '??'}</div></div>`;
-                            mCache[id] = L.marker([val.lat, val.lng], { icon: L.divIcon({ className: '', html: html, iconAnchor: [27, 27] }) }).addTo(map).on('click', () => openVote(id, val));
+                            const html = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${color}">
+                                <div class="text-2xl mt-1">${val.icon}</div>
+                                <div class="line-badge">${val.line || '??'}</div>
+                            </div>`;
+                            
+                            mCache[id] = L.marker([val.lat, val.lng], {
+                                icon: L.divIcon({ className: '', html: html, iconAnchor: [27, 27] })
+                            }).addTo(map).on('click', () => openVote(id, val));
                         }
                     });
                     checkProximity(data);
                 }
             });
 
-            // Nasłuchiwanie CONFIG
-            onValue(ref(db, `v42/${cityKey}/config`), (snap) => {
+            // Nasłuchiwanie CONFIG (v38)
+            onValue(ref(db, `v38/${cityKey}/config`), (snap) => {
                 masterDirs = snap.val() || [];
                 refreshList(masterDirs);
             });
         };
 
+        // --- LOCATION ENGINE ---
         map.on('locationfound', (e) => {
             uPos = e.latlng;
-            document.getElementById('gps-info').innerText = "GPS LIVE";
+            document.getElementById('gps-info').innerText = "GPS AKTYWNY";
             document.getElementById('gps-info').style.color = "#10b981";
             document.getElementById('gps-dot').style.backgroundColor = "#10b981";
-            if(!window.dot) window.dot = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 5, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
-            else window.dot.setLatLng(e.latlng);
+            
+            if(!window.dot) {
+                window.dot = L.circleMarker(e.latlng, { radius: 12, color: '#fff', weight: 5, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
+            } else {
+                window.dot.setLatLng(e.latlng);
+            }
         });
 
-        // SILNIK RADARU (NAPRAWIONY)
+        // --- SILNIK RADARU (NAPRAWIONY) ---
         function checkProximity(alerts) {
             if(!uPos || !alerts) return;
             Object.values(alerts).forEach(r => {
@@ -404,22 +463,25 @@
                 if(distance < 450) {
                     document.getElementById('toast-icon').innerHTML = r.icon;
                     document.getElementById('toast-type-label').innerText = r.type;
-                    document.getElementById('toast-street').innerText = r.street || "Punkt na trasie";
-                    document.getElementById('toast-dir').innerText = "KIERUNEK: " + (r.dir || "Brak");
+                    document.getElementById('toast-street').innerText = r.street || "W pobliżu trasy";
+                    document.getElementById('toast-dir').innerText = "KIERUNEK: " + (r.dir || "Nieznany");
                     document.getElementById('toast-dist').innerText = distance + "m";
                     document.getElementById('radar-toast').classList.add('active');
-                    document.getElementById('alert-sound').play().catch(()=>{});
+                    
+                    document.getElementById('alert-sound').play().catch(e => {});
                 }
             });
         }
         window.hideToast = () => document.getElementById('radar-toast').classList.remove('active');
 
+        // --- REPORTING ---
         window.triggerReport = () => {
             const hint = document.createElement('div');
             hint.className = "tap-hint-box";
             hint.id = "tap-hint";
             hint.innerHTML = `Wskaż miejsce na mapie`;
             document.body.appendChild(hint);
+            
             map.once('click', (e) => {
                 tCoords = e.latlng;
                 document.getElementById('tap-hint').remove();
@@ -429,18 +491,23 @@
             });
         };
 
-        window.selectType = (t, i) => { sType = t; sIcon = i; openSheet('modal-dirs'); };
+        window.selectType = (type, icon) => { sType = type; sIcon = icon; openSheet('modal-dirs'); };
         window.fillDirection = (dir) => { document.getElementById('search-dir').value = dir; };
 
         window.submitFormManual = async () => {
-            const line = document.getElementById('input-line').value.trim() || "??";
-            const dir = document.getElementById('search-dir').value.trim() || "Nieokreślony";
+            const lineVal = document.getElementById('input-line').value.trim() || "??";
+            const dirVal = document.getElementById('search-dir').value.trim() || "Nieokreślony";
             closeModals();
-            const street = await getRoadName(tCoords.lat, tCoords.lng);
-            const alertRef = push(ref(db, `v42/${cityKey}/alerts`));
-            set(alertRef, { type: sType, icon: sIcon, dir: dir, line: line, street: street, lat: tCoords.lat, lng: tCoords.lng, author: uid, createdAt: Date.now(), lastVote: Date.now() });
+            const streetName = await getRoadName(tCoords.lat, tCoords.lng);
+            
+            const alertRef = push(ref(db, `v38/${cityKey}/alerts`));
+            set(alertRef, {
+                type: sType, icon: sIcon, dir: dirVal, line: lineVal, street: streetName,
+                lat: tCoords.lat, lng: tCoords.lng, author: uid, createdAt: Date.now(), lastVote: Date.now()
+            });
         };
 
+        // --- MODALS ---
         window.openVote = (id, data) => {
             openSheet('modal-vote');
             document.getElementById('v-icon').innerHTML = data.icon;
@@ -450,19 +517,58 @@
             document.getElementById('v-street').innerText = data.street || "";
             document.getElementById('v-created').innerText = timeAgo(data.createdAt);
             document.getElementById('v-last').innerText = timeAgo(data.lastVote);
-            document.getElementById('v-ok').onclick = () => { closeModals(); update(ref(db, `v42/${cityKey}/alerts/${id}`), { lastVote: Date.now() }); };
+            
+            document.getElementById('v-ok').onclick = () => {
+                closeModals();
+                update(ref(db, `v38/${cityKey}/alerts/${id}`), { lastVote: Date.now() });
+            };
+            
             const delBtn = document.getElementById('v-del');
             delBtn.classList.toggle('hidden', data.author !== uid);
-            delBtn.onclick = () => { closeModals(); remove(ref(db, `v42/${cityKey}/alerts/${id}`)); };
+            delBtn.onclick = () => { 
+                closeModals(); 
+                remove(ref(db, `v38/${cityKey}/alerts/${id}`)); 
+            };
         };
 
         window.adminLogin = () => { if(prompt("Hasło:") === "mzk2026") toggleAdminView(true); };
-        window.toggleAdminView = (s) => { document.getElementById('admin-view').classList.toggle('hidden', !s); if(s) document.getElementById('admin-input').value = masterDirs.join('\n'); };
-        window.pushConfig = () => { const lines = document.getElementById('admin-input').value.split('\n').filter(l => l.trim() !== ""); set(ref(db, `v42/${cityKey}/config`), lines).then(() => { alert("Baza zsynchronizowana!"); toggleAdminView(false); }); };
-        window.openSheet = (id) => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById(id).classList.add('open'); document.getElementById('fab-container').style.opacity = '0'; };
-        window.closeModals = () => { document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open')); document.getElementById('fab-container').style.opacity = '1'; if(tMarker) map.removeLayer(tMarker); };
-        function refreshList(list) { document.getElementById('list-dirs').innerHTML = list.map(dir => `<button onclick="fillDirection('${dir}')" class="w-full bg-white border-2 border-slate-50 p-6 rounded-[30px] text-left font-black text-sm text-slate-800 btn-press flex items-center justify-between shadow-sm"><span>${dir}</span><i class="fa-solid fa-chevron-right text-slate-200"></i></button>`).join(''); }
-        window.runSearch = () => { const query = document.getElementById('search-dir').value.toLowerCase(); refreshList(masterDirs.filter(d => d.toLowerCase().includes(query))); };
+        window.toggleAdminView = (state) => {
+            document.getElementById('admin-view').classList.toggle('hidden', !state);
+            if(state) document.getElementById('admin-input').value = masterDirs.join('\n');
+        };
+        window.pushConfig = () => {
+            const lines = document.getElementById('admin-input').value.split('\n').filter(l => l.trim() !== "");
+            set(ref(db, `v38/${cityKey}/config`), lines).then(() => { 
+                alert("Synchronizacja v38 OK!"); 
+                toggleAdminView(false); 
+            });
+        };
+
+        window.openSheet = (id) => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById(id).classList.add('open');
+            document.getElementById('fab-container').style.opacity = '0';
+        };
+        
+        window.closeModals = () => {
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
+            document.getElementById('fab-container').style.opacity = '1';
+            if(tMarker) { map.removeLayer(tMarker); tMarker = null; }
+        };
+
+        function refreshList(list) {
+            const container = document.getElementById('list-dirs');
+            container.innerHTML = list.map(dir => `
+                <button onclick="fillDirection('${dir}')" class="w-full bg-white border-2 border-slate-50 p-6 rounded-[30px] text-left font-black text-sm text-slate-800 btn-press flex items-center justify-between shadow-sm">
+                    <span>${dir}</span><i class="fa-solid fa-chevron-right text-slate-200"></i>
+                </button>
+            `).join('');
+        }
+        
+        window.runSearch = () => {
+            const query = document.getElementById('search-dir').value.toLowerCase();
+            refreshList(masterDirs.filter(d => d.toLowerCase().includes(query)));
+        };
     </script>
 </body>
 </html>
