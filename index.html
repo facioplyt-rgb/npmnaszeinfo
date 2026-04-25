@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RADAR SYSTEM V35 | OMNI</title>
+    <title>RADAR SYSTEM V37 | ULTIMATE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,18 +12,20 @@
 
     <style>
         :root { --main: #f59e0b; --dark: #0f172a; --danger: #ef4444; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--dark); margin: 0; overflow: hidden; height: 100vh; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--dark); margin: 0; overflow: hidden; height: 100vh; width: 100vw; }
         #map { height: 100vh; width: 100%; z-index: 1; filter: contrast(1.1); }
         
-        /* Ekran wyboru - Surowy/Uniwersalny */
-        #city-selector { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* CITY SELECTOR */
+        #city-selector { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
         
+        /* GLASSMORPHISM */
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(0,0,0,0.05); }
         
+        /* BOTTOM SHEETS (MODALS) */
         .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1); max-width: 550px; margin: 0 auto; }
         .sheet.open { transform: translateY(0); }
         
-        /* Radar Toast */
+        /* RADAR TOAST */
         #radar-toast { 
             position: fixed; top: 120px; left: 20px; right: 20px; z-index: 2000;
             transform: translateX(-150%); transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
@@ -31,18 +33,22 @@
         }
         #radar-toast.active { transform: translateX(0); }
 
-        /* Markery */
+        /* MARKERY MAPY */
         .custom-marker { 
             width: 54px; height: 54px; border-radius: 15px; border: 3px solid #fff;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; box-shadow: 0 12px 24px rgba(0,0,0,0.3); transition: all 0.3s;
+            color: white; box-shadow: 0 12px 24px rgba(0,0,0,0.3);
         }
         .pulse-red { animation: pulse 1.2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-
-        .line-badge { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 900; margin-top: 2px; }
-        .btn-press { transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        
+        .line-badge { background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 900; margin-top: 2px; }
+        
+        /* UTILS */
+        .btn-press { transition: all 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent; border: none; outline: none; }
         .btn-press:active { transform: scale(0.92); }
+        .dir-scroll::-webkit-scrollbar { width: 5px; }
+        .dir-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -50,21 +56,25 @@
     <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" preload="auto"></audio>
 
     <div id="city-selector">
-        <div class="mb-12 text-center">
+        <div class="mb-10 text-center">
             <i class="fa-solid fa-tower-broadcast text-6xl text-amber-500 mb-6"></i>
-            <h1 class="text-4xl font-black tracking-tight text-slate-900 uppercase italic">Radar System</h1>
-            <p class="text-slate-400 font-bold text-[10px] tracking-[0.3em] uppercase">Wybierz obszar operacyjny</p>
+            <h1 class="text-4xl font-black tracking-tight text-slate-900 uppercase italic">SYSTEM RADAR</h1>
+            <p class="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Wersja Ultimate V37</p>
         </div>
-        <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-80 p-7 bg-white border-2 border-slate-100 rounded-[35px] flex items-center gap-5 btn-press shadow-2xl">
-            <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-100"><i class="fa-solid fa-map-location-dot"></i></div>
-            <div class="text-left"><span class="block font-black text-slate-800 text-xl">Gorzów Wlkp.</span><span class="text-[9px] font-black text-green-500 uppercase tracking-widest">System Live</span></div>
+        <button onclick="startApp('gorzow', [52.732, 15.237])" class="w-80 p-7 bg-white border-2 border-slate-100 rounded-[35px] flex items-center gap-5 btn-press shadow-2xl mb-4">
+            <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-200"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div class="text-left"><span class="block font-black text-slate-800 text-xl">Gorzów Wlkp.</span><span class="text-[9px] font-black text-green-500 uppercase">System Online</span></div>
+        </button>
+        <button class="w-80 p-7 bg-slate-50 border-2 border-slate-100 rounded-[35px] flex items-center gap-5 opacity-50 cursor-not-allowed">
+            <div class="w-14 h-14 bg-slate-200 text-slate-400 rounded-2xl flex items-center justify-center text-2xl"><i class="fa-solid fa-lock"></i></div>
+            <div class="text-left"><span class="block font-black text-slate-400 text-xl">Inne Miasta</span><span class="text-[9px] font-black text-slate-400 uppercase">Wkrótce</span></div>
         </button>
     </div>
 
     <div id="radar-toast" class="glass rounded-3xl p-6 flex items-center gap-5 border-l-[10px] border-amber-500 shadow-2xl">
         <div id="toast-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-amber-50 text-amber-600 shadow-inner"></div>
         <div class="flex-1">
-            <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Radar Aktywny</h4>
+            <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Blisko Ciebie</h4>
             <p id="toast-street" class="text-base font-black text-slate-900 leading-tight"></p>
             <p id="toast-dir" class="text-[11px] font-bold text-slate-400 uppercase italic mt-1"></p>
         </div>
@@ -78,80 +88,79 @@
                     <i class="fa-solid fa-rss animate-pulse"></i>
                 </div>
                 <div>
-                    <h2 id="city-title" class="text-sm font-black uppercase text-slate-900 tracking-tighter italic">Lokalizacja</h2>
-                    <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest italic">Szukanie sygnału...</p>
+                    <h2 id="city-title" class="text-sm font-black uppercase text-slate-900">RADAR</h2>
+                    <p id="gps-info" class="text-[9px] text-slate-400 font-bold uppercase italic">GPS: OFF</p>
                 </div>
             </div>
-            <button onclick="adminLogin()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 btn-press border border-slate-100"><i class="fa-solid fa-shield-halved"></i></button>
+            <button onclick="adminLogin()" class="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 btn-press shadow-inner"><i class="fa-solid fa-shield-halved"></i></button>
         </div>
     </div>
 
     <div id="map"></div>
 
     <div id="fab-container" class="fixed bottom-10 inset-x-0 z-[500] flex justify-center px-8 opacity-0 pointer-events-none transition-all duration-700">
-        <button onclick="triggerReport()" class="w-full max-w-sm bg-slate-900 text-white p-7 rounded-[35px] font-black text-sm tracking-[0.15em] shadow-3xl flex items-center justify-center gap-4 btn-press border-b-8 border-amber-500 uppercase">
-            <i class="fa-solid fa-plus-circle text-xl text-amber-500"></i> DODAJ ALERT
+        <button onclick="triggerReport()" class="w-full max-w-sm bg-slate-900 text-white p-7 rounded-[35px] font-black text-sm tracking-widest shadow-2xl flex items-center justify-center gap-4 btn-press border-b-8 border-amber-500 uppercase">
+            <i class="fa-solid fa-plus-circle text-xl text-amber-500"></i> DODAJ ZGŁOSZENIE
         </button>
     </div>
 
-    <div id="modal-type" class="sheet glass rounded-t-[50px] p-12 shadow-2xl">
-        <div class="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-10"></div>
-        <div class="grid grid-cols-3 gap-5">
-            <button onclick="selectType('KONTROLA', '<i class=\'fa-solid fa-user-ninja\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-red-50 rounded-[40px] text-red-600 btn-press border border-red-100">
-                <i class="fa-solid fa-user-ninja text-4xl"></i><span class="text-[9px] font-black uppercase">Kontrola</span>
+    <div id="modal-type" class="sheet glass rounded-t-[50px] p-10 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div class="w-16 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+        <div class="grid grid-cols-3 gap-4">
+            <button onclick="selectType('KONTROLA', '<i class=\'fa-solid fa-user-secret\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] text-red-600 btn-press border border-red-100">
+                <i class="fa-solid fa-user-secret text-4xl"></i><span class="text-[9px] font-black uppercase">Kontrola</span>
             </button>
-            <button onclick="selectType('AWARIA', '<i class=\'fa-solid fa-hand-dots\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-orange-50 rounded-[40px] text-orange-600 btn-press border border-orange-100">
+            <button onclick="selectType('AWARIA', '<i class=\'fa-solid fa-car-burst\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-orange-50 rounded-[35px] text-orange-600 btn-press border border-orange-100">
                 <i class="fa-solid fa-triangle-exclamation text-4xl"></i><span class="text-[9px] font-black uppercase">Awaria</span>
             </button>
-            <button onclick="selectType('KOREK', '<i class=\'fa-solid fa-clock\'></i>')" class="flex flex-col items-center gap-5 p-8 bg-blue-50 rounded-[40px] text-blue-600 btn-press border border-blue-100">
+            <button onclick="selectType('KOREK', '<i class=\'fa-solid fa-traffic-light\'></i>')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] text-blue-600 btn-press border border-blue-100">
                 <i class="fa-solid fa-clock text-4xl"></i><span class="text-[9px] font-black uppercase">Korek</span>
             </button>
         </div>
     </div>
 
-    <div id="modal-dirs" class="sheet glass rounded-t-[50px] p-12 shadow-2xl">
-        <h2 class="text-3xl font-black mb-8 text-slate-900 uppercase italic">Szczegóły</h2>
+    <div id="modal-dirs" class="sheet glass rounded-t-[50px] p-10 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <h2 class="text-3xl font-black mb-8 text-slate-900 italic">SZCZEGÓŁY</h2>
         <div class="flex gap-3 mb-6">
-            <input type="text" id="input-line" placeholder="LINIA" class="w-1/3 bg-slate-100 p-6 rounded-3xl font-black outline-none border-2 border-transparent focus:border-amber-500 text-center">
-            <div class="w-2/3 relative">
-                <input type="text" id="search-dir" placeholder="KIERUNEK..." class="w-full bg-slate-100 p-6 rounded-3xl font-bold outline-none border-2 border-transparent focus:border-amber-500" oninput="runSearch()">
-            </div>
+            <input type="text" id="input-line" placeholder="LINIA" class="w-1/3 bg-slate-100 p-6 rounded-[25px] font-black text-center outline-none border-2 border-transparent focus:border-amber-500 shadow-inner">
+            <input type="text" id="search-dir" placeholder="KIERUNEK..." class="w-2/3 bg-slate-100 p-6 rounded-[25px] font-bold outline-none border-2 border-transparent focus:border-amber-500 shadow-inner" oninput="runSearch()">
         </div>
-        <div id="list-dirs" class="grid gap-3 max-h-[35vh] overflow-y-auto pr-2 mb-8"></div>
-        <button onclick="closeModals()" class="w-full text-[11px] font-black text-slate-300 uppercase tracking-widest">Anuluj</button>
+        <div id="list-dirs" class="grid gap-3 max-h-[35vh] overflow-y-auto dir-scroll pr-2 mb-8"></div>
+        <button onclick="closeModals()" class="w-full text-[11px] font-black text-slate-400 uppercase tracking-widest bg-transparent p-4">Anuluj Operację</button>
     </div>
 
-    <div id="modal-vote" class="sheet glass rounded-t-[50px] p-12 text-center shadow-2xl">
-        <div id="v-icon" class="text-7xl mb-6 text-slate-900"></div>
+    <div id="modal-vote" class="sheet glass rounded-t-[50px] p-10 pb-12 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div id="v-icon" class="text-7xl mb-6 text-slate-900 drop-shadow-md"></div>
         <h3 id="v-title" class="text-4xl font-black italic text-slate-900 mb-2"></h3>
-        <p id="v-line" class="text-amber-500 font-black text-2xl mb-6"></p>
+        <p id="v-line" class="text-amber-500 font-black text-2xl mb-6 drop-shadow-sm"></p>
         
-        <div class="bg-slate-50 rounded-[30px] p-6 mb-8 grid grid-cols-2 gap-6 border border-slate-100">
+        <div class="bg-slate-50 rounded-[30px] p-6 mb-8 grid grid-cols-2 gap-6 border border-slate-200 shadow-inner">
             <div>
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Dodano:</p>
-                <p id="v-created" class="text-sm font-black text-slate-700"></p>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Zgłoszono:</p>
+                <p id="v-created" class="text-sm font-black text-slate-800"></p>
             </div>
             <div>
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ostatnie Potw.:</p>
-                <p id="v-last" class="text-sm font-black text-slate-700">-</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ostatnie info:</p>
+                <p id="v-last" class="text-sm font-black text-slate-800">-</p>
             </div>
         </div>
-
-        <p id="v-dir" class="text-slate-400 font-bold text-xs uppercase mb-10 tracking-[0.2em] italic"></p>
+        
+        <p id="v-dir" class="text-slate-500 font-bold text-[11px] uppercase mb-10 tracking-widest italic"></p>
         
         <div class="grid grid-cols-2 gap-5 mb-6">
-            <button id="v-ok" class="bg-slate-900 text-white p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-2xl">To prawda</button>
-            <button onclick="closeModals()" class="bg-slate-100 text-slate-600 p-7 rounded-[30px] font-black text-xs uppercase btn-press">Nie ma</button>
+            <button id="v-ok" class="bg-slate-900 text-white p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-xl border-b-4 border-slate-700">TO PRAWDA</button>
+            <button onclick="closeModals()" class="bg-slate-100 text-slate-600 p-7 rounded-[30px] font-black text-xs uppercase btn-press shadow-sm border border-slate-200">NIE MA JUŻ</button>
         </div>
-        <button id="v-del" class="hidden w-full p-4 text-red-500 font-black text-[10px] uppercase tracking-widest">Usuń mój wpis</button>
+        <button id="v-del" class="hidden w-full p-4 text-red-500 font-black text-[10px] uppercase tracking-widest">Usuń własne zgłoszenie</button>
     </div>
 
     <div id="admin-view" class="hidden fixed inset-0 z-[10000] bg-white p-10 overflow-y-auto">
-        <div class="max-w-xl mx-auto">
-            <h2 class="text-4xl font-black italic mb-12 uppercase">Database Config</h2>
-            <textarea id="admin-input" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[40px] p-8 text-base font-bold mb-8 outline-none focus:border-amber-500 shadow-inner"></textarea>
-            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-8 rounded-[30px] font-black btn-press shadow-3xl">SYNCHRONIZUJ RTDB</button>
-            <button onclick="toggleAdminView(false)" class="w-full p-6 text-slate-300 font-bold">WRÓĆ DO MAPY</button>
+        <div class="max-w-xl mx-auto mt-10">
+            <h2 class="text-4xl font-black mb-10 italic uppercase text-slate-900">Baza Danych<br><span class="text-amber-500 text-2xl">Kierunki Tras</span></h2>
+            <p class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">Wpisz każdy kierunek w nowej linii:</p>
+            <textarea id="admin-input" rows="15" class="w-full bg-slate-50 border-4 border-slate-100 rounded-[35px] p-8 font-bold text-slate-700 mb-8 outline-none focus:border-amber-500 transition-colors shadow-inner"></textarea>
+            <button onclick="pushConfig()" class="w-full bg-slate-900 text-white p-8 rounded-[35px] font-black text-sm tracking-widest btn-press shadow-2xl mb-4">ZAPISZ W CHMURZE RTDB</button>
+            <button onclick="toggleAdminView(false)" class="w-full p-6 text-slate-400 font-black text-xs uppercase tracking-widest">Zamknij Panel</button>
         </div>
     </div>
 
@@ -160,6 +169,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
+        // --- KONFIGURACJA FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -172,9 +182,12 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        
+        // --- INICJALIZACJA MAPY ---
         const map = L.map('map', { zoomControl: false, attributionControl: false, tap: false });
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
+        // --- ZMIENNE GLOBALNE ---
         let cityKey = '';
         let uPos = null;
         let sType = '';
@@ -183,113 +196,161 @@
         let tCoords = null;
         let masterDirs = [];
         const mCache = {};
-        const uid = localStorage.getItem('mzk_uid') || Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('mzk_uid', uid);
+        
+        // Unikalne ID użytkownika
+        const uid = localStorage.getItem('mzk_uid_v37') || Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('mzk_uid_v37', uid);
 
-        // --- HELPERS ---
+        // --- FUNKCJE POMOCNICZE ---
         function timeAgo(ts) {
             if(!ts) return "-";
             const diff = Math.floor((Date.now() - ts) / 60000);
-            return diff < 1 ? "Przed chwilą" : (diff < 60 ? `${diff}m temu` : `${Math.floor(diff/60)}h temu`);
+            if(diff < 1) return "Przed chwilą";
+            if(diff < 60) return `${diff} min temu`;
+            return `${Math.floor(diff/60)} godz temu`;
         }
 
-        async function getSt(la, ln) {
+        async function getRoadName(la, ln) {
             try {
                 const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${la}&lon=${ln}&zoom=18`);
                 const d = await r.json();
-                return d.address.road || d.address.pedestrian || "Ulica MZK";
-            } catch { return "Lokalizacja"; }
+                return d.address.road || d.address.pedestrian || "Punkt kontrolny";
+            } catch { return "Droga Publiczna"; }
         }
 
-        // --- START ---
+        // --- START APLIKACJI ---
         window.startApp = (key, coords) => {
             cityKey = key;
-            document.getElementById('city-selector').style.opacity = '0';
-            setTimeout(() => document.getElementById('city-selector').style.display = 'none', 500);
+            const selector = document.getElementById('city-selector');
+            selector.style.opacity = '0';
+            setTimeout(() => selector.style.display = 'none', 500);
+            
             document.getElementById('fab-container').style.opacity = '1';
             document.getElementById('fab-container').style.pointerEvents = 'auto';
             document.getElementById('city-title').innerText = key.toUpperCase();
+            
             map.setView(coords, 14);
             map.locate({ setView: true, maxZoom: 16, watch: true });
 
-            onValue(ref(db, `v35/${cityKey}/alerts`), (snap) => {
+            // Nasłuchiwanie Bazy Danych - ALERTÓW (Teraz zapisujemy pod węzłem v37)
+            onValue(ref(db, `v37/${cityKey}/alerts`), (snap) => {
                 const data = snap.val();
                 const ids = data ? Object.keys(data) : [];
-                Object.keys(mCache).forEach(id => { if(!ids.includes(id)) { map.removeLayer(mCache[id]); delete mCache[id]; }});
+                
+                // Usuwanie starych markerów
+                Object.keys(mCache).forEach(id => { 
+                    if(!ids.includes(id)) { map.removeLayer(mCache[id]); delete mCache[id]; }
+                });
+                
+                // Rysowanie nowych markerów
                 if (data) {
                     Object.entries(data).forEach(([id, val]) => {
                         if (!mCache[id]) {
                             const color = val.type === 'KONTROLA' ? '#ef4444' : (val.type === 'AWARIA' ? '#f97316' : '#2563eb');
-                            const html = `<div class="custom-marker ${val.type === 'KONTROLA' ? 'pulse-red' : ''}" style="background:${color}">
-                                <div class="text-xl">${val.icon}</div>
+                            const pulsingClass = val.type === 'KONTROLA' ? 'pulse-red' : '';
+                            const html = `<div class="custom-marker ${pulsingClass}" style="background:${color}">
+                                <div class="text-2xl mt-1">${val.icon}</div>
                                 <div class="line-badge">${val.line || '??'}</div>
                             </div>`;
+                            
                             mCache[id] = L.marker([val.lat, val.lng], {
                                 icon: L.divIcon({ className: '', html: html, iconAnchor: [27, 27] })
                             }).addTo(map).on('click', () => openVote(id, val));
                         }
                     });
-                    checkProx(data);
+                    checkProximity(data);
                 }
             });
 
-            onValue(ref(db, `v35/${cityKey}/config`), (snap) => {
+            // Nasłuchiwanie Bazy Danych - KIERUNKÓW
+            onValue(ref(db, `v37/${cityKey}/config`), (snap) => {
                 masterDirs = snap.val() || [];
                 refreshList(masterDirs);
             });
         };
 
+        // --- LOKALIZACJA GPS ---
         map.on('locationfound', (e) => {
             uPos = e.latlng;
-            document.getElementById('gps-info').innerText = "POŁĄCZONO GPS";
-            document.getElementById('gps-info').style.color = "#10b981";
-            if(!window.dot) window.dot = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 4, fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
-            else window.dot.setLatLng(e.latlng);
+            const gpsEl = document.getElementById('gps-info');
+            gpsEl.innerText = "GPS POŁĄCZONY";
+            gpsEl.style.color = "#10b981"; // Zielony Tailwind
+            
+            if(!window.dot) {
+                window.dot = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 4, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(map);
+            } else {
+                window.dot.setLatLng(e.latlng);
+            }
         });
 
-        function checkProx(alerts) {
+        // --- RADAR ZBLIŻENIOWY ---
+        function checkProximity(alerts) {
             if(!uPos || !alerts) return;
             Object.values(alerts).forEach(r => {
                 if(uPos.distanceTo(L.latLng(r.lat, r.lng)) < 400) {
                     document.getElementById('toast-icon').innerHTML = r.icon;
-                    document.getElementById('toast-street').innerText = r.street || "Pobliże";
-                    document.getElementById('toast-dir').innerText = "W STRONĘ: " + r.dir;
+                    document.getElementById('toast-street').innerText = r.street || "Pobliże lokalizacji";
+                    document.getElementById('toast-dir').innerText = "W KIERUNKU: " + r.dir;
                     document.getElementById('radar-toast').classList.add('active');
-                    document.getElementById('alert-sound').play().catch(()=>{});
+                    
+                    // Bezpieczne odtworzenie dźwięku
+                    const audio = document.getElementById('alert-sound');
+                    audio.play().catch(e => console.log("Przeglądarka zablokowała auto-play dźwięku"));
                 }
             });
         }
         window.hideToast = () => document.getElementById('radar-toast').classList.remove('active');
 
-        // --- ACTIONS ---
+        // --- PROCES DODAWANIA ZGŁOSZENIA ---
         window.triggerReport = () => {
-            const h = document.createElement('div');
-            h.id = "h-t"; h.className = "fixed top-1/3 inset-x-10 z-[2000] text-center pointer-events-none";
-            h.innerHTML = `<span class="glass px-8 py-5 rounded-3xl font-black text-[10px] uppercase border-2 border-amber-500 animate-pulse shadow-2xl">Wskaż punkt na mapie</span>`;
-            document.body.appendChild(h);
+            const hint = document.createElement('div');
+            hint.id = "tap-hint"; 
+            hint.className = "fixed top-1/3 inset-x-10 z-[2000] text-center pointer-events-none animate-bounce";
+            hint.innerHTML = `<span class="glass px-8 py-5 rounded-[30px] font-black text-xs border-2 border-amber-500 shadow-2xl text-slate-800 uppercase tracking-widest">Wskaż punkt na mapie</span>`;
+            document.body.appendChild(hint);
+            
             map.once('click', (e) => {
                 tCoords = e.latlng;
-                document.getElementById('h-t').remove();
+                document.getElementById('tap-hint').remove();
                 if(tMarker) map.removeLayer(tMarker);
-                tMarker = L.circle(e.latlng, { radius: 30, color: '#f59e0b', fillOpacity: 0.5 }).addTo(map);
+                tMarker = L.circle(e.latlng, { radius: 35, color: '#f59e0b', fillOpacity: 0.5, weight: 3 }).addTo(map);
                 openSheet('modal-type');
             });
         };
 
-        window.selectType = (t, i) => { sType = t; sIcon = i; openSheet('modal-dirs'); };
+        window.selectType = (type, icon) => { 
+            sType = type; 
+            sIcon = icon; 
+            openSheet('modal-dirs'); 
+        };
 
         window.finalSubmit = async (dir) => {
-            const line = document.getElementById('input-line').value || "??";
+            const lineValue = document.getElementById('input-line').value.trim() || "??";
             closeModals();
-            const street = await getSt(tCoords.lat, tCoords.lng);
-            const refPush = push(ref(db, `v35/${cityKey}/alerts`));
-            set(refPush, {
-                type: sType, icon: sIcon, dir, line, street,
-                lat: tCoords.lat, lng: tCoords.lng,
-                author: uid, createdAt: Date.now(), lastVote: Date.now()
+            
+            const streetName = await getRoadName(tCoords.lat, tCoords.lng);
+            
+            // WYSYŁKA DO FIREBASE
+            const pushRef = push(ref(db, `v37/${cityKey}/alerts`));
+            set(pushRef, {
+                type: sType, 
+                icon: sIcon, 
+                dir: dir, 
+                line: lineValue, 
+                street: streetName,
+                lat: tCoords.lat, 
+                lng: tCoords.lng,
+                author: uid, 
+                createdAt: Date.now(), 
+                lastVote: Date.now()
+            }).then(() => {
+                console.log("Zgłoszenie zapisane w chmurze pomyślnie.");
+            }).catch(err => {
+                alert("Błąd połączenia z bazą: " + err.message);
             });
         };
 
+        // --- GŁOSOWANIE I PODGLĄD ---
         window.openVote = (id, data) => {
             openSheet('modal-vote');
             document.getElementById('v-icon').innerHTML = data.icon;
@@ -301,43 +362,80 @@
             
             document.getElementById('v-ok').onclick = () => {
                 closeModals();
-                update(ref(db, `v35/${cityKey}/alerts/${id}`), { lastVote: Date.now() });
+                update(ref(db, `v37/${cityKey}/alerts/${id}`), { lastVote: Date.now() });
             };
-            const d = document.getElementById('v-del');
-            d.classList.toggle('hidden', data.author !== uid);
-            d.onclick = () => { closeModals(); remove(ref(db, `v35/${cityKey}/alerts/${id}`)); };
+            
+            const delBtn = document.getElementById('v-del');
+            delBtn.classList.toggle('hidden', data.author !== uid);
+            delBtn.onclick = () => { 
+                closeModals(); 
+                remove(ref(db, `v37/${cityKey}/alerts/${id}`)); 
+            };
         };
 
-        // --- SYSTEM UI ---
-        window.adminLogin = () => { if(prompt("Klucz:") === "mzk2026") toggleAdminView(true); };
-        window.toggleAdminView = (s) => {
-            document.getElementById('admin-view').classList.toggle('hidden', !s);
-            if(s) document.getElementById('admin-input').value = masterDirs.join('\n');
+        // --- PANEL ADMINA ---
+        window.adminLogin = () => { 
+            if(prompt("Podaj hasło administratora (mzk2026):") === "mzk2026") {
+                toggleAdminView(true); 
+            } else {
+                alert("Błędne hasło.");
+            }
         };
+        
+        window.toggleAdminView = (state) => {
+            document.getElementById('admin-view').classList.toggle('hidden', !state);
+            if(state) {
+                document.getElementById('admin-input').value = masterDirs.join('\n');
+            }
+        };
+        
         window.pushConfig = () => {
             const lines = document.getElementById('admin-input').value.split('\n').filter(l => l.trim() !== "");
-            set(ref(db, `v35/${cityKey}/config`), lines).then(() => { alert("Baza Zapisana!"); toggleAdminView(false); });
+            set(ref(db, `v37/${cityKey}/config`), lines).then(() => { 
+                alert("Baza kierunków została pomyślnie nadpisana w chmurze."); 
+                toggleAdminView(false); 
+            }).catch(err => {
+                alert("Błąd zapisu: " + err.message);
+            });
         };
+
+        // --- INTERFEJS I LOGIKA WYSZUKIWANIA ---
         window.openSheet = (id) => {
             document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
             document.getElementById(id).classList.add('open');
             document.getElementById('fab-container').style.opacity = '0';
         };
+        
         window.closeModals = () => {
             document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
             document.getElementById('fab-container').style.opacity = '1';
-            if(tMarker) { map.removeLayer(tMarker); tMarker = null; }
+            // Wyczyść inputy i marker pomocniczy
+            document.getElementById('input-line').value = '';
+            document.getElementById('search-dir').value = '';
+            runSearch(); // Reset listy po zamknięciu
+            if(tMarker) { 
+                map.removeLayer(tMarker); 
+                tMarker = null; 
+            }
         };
-        function refreshList(l) {
-            document.getElementById('list-dirs').innerHTML = l.map(d => `
-                <button onclick="finalSubmit('${d}')" class="w-full bg-white border-2 border-slate-50 p-6 rounded-[30px] text-left font-black text-sm text-slate-700 btn-press">
-                    <i class="fa-solid fa-arrow-right-long mr-4 text-amber-500"></i>${d}
+        
+        function refreshList(list) {
+            const container = document.getElementById('list-dirs');
+            if(list.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 font-bold text-xs p-4">Brak kierunków. Dodaj je w Panelu Admina.</p>`;
+                return;
+            }
+            container.innerHTML = list.map(dir => `
+                <button onclick="finalSubmit('${dir}')" class="w-full bg-white border-2 border-slate-50 p-6 rounded-[25px] text-left font-black text-sm text-slate-800 btn-press flex items-center justify-between shadow-sm">
+                    <span>${dir}</span><i class="fa-solid fa-chevron-right text-slate-200"></i>
                 </button>
             `).join('');
         }
+        
         window.runSearch = () => {
-            const v = document.getElementById('search-dir').value.toLowerCase();
-            refreshList(masterDirs.filter(d => d.toLowerCase().includes(v)));
+            const query = document.getElementById('search-dir').value.toLowerCase();
+            const filtered = masterDirs.filter(d => d.toLowerCase().includes(query));
+            refreshList(filtered);
         };
     </script>
 </body>
