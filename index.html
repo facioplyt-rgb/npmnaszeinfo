@@ -455,7 +455,7 @@
         }
 
         document.getElementById('btn-admin-clear').addEventListener('click', () => {
-            if(confirm("UWAGA! Usuniesz wszystkie znaczniki z mapy w tym mieście. Kontynuować?")) {
+            if(confirm("UWAGA! Usuniesz wszystkie znaczniki z mapy w tym mieście.")) {
                 set(ref(db, `radar_live/${State.city}/alerts`), null)
                     .then(() => {
                         showToast("Mapa wyczyszczona", "fa-skull", "#ef4444");
