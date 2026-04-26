@@ -1,368 +1,281 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | Wsystsko o eventach!</title>
+    <title>Ełk Nasze Eventy | Eventy to nasze zadanie</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --main-color: #003366;
-            --accent-color: #ffcc00;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-dark: #2c3e50;
-            --shadow: 0 10px 30px rgba(0,0,0,0.1);
-            --gradient: linear-gradient(135deg, #003366 0%, #00509e 100%);
+            --primary: #003366;
+            --accent: #ffcc00;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --text: #1c1e21;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Roboto', sans-serif; background-color: var(--bg); color: var(--text-dark); overflow-x: hidden; }
-        h1, h2, h3, .logo { font-family: 'Montserrat', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); line-height: 1.6; }
 
-        /* --- NAVIGATION --- */
-        nav {
-            background: var(--gradient);
-            color: white;
-            padding: 0 20px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        /* POWIADOMIENIA (TOAST) */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff;
+            text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+            z-index: 2000; left: 50%; top: 30px; transform: translateX(-50%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-weight: bold;
         }
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo { font-weight: 900; font-size: 24px; text-transform: uppercase; letter-spacing: -1px; cursor: pointer; }
-        .logo span { color: var(--accent-color); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {top: 0; opacity: 0;} to {top: 30px; opacity: 1;} }
+        @keyframes fadeout { from {top: 30px; opacity: 1;} to {top: 0; opacity: 0;} }
+
+        /* NAWIGACJA */
+        nav { background: var(--primary); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 22px; font-weight: 900; text-transform: uppercase; cursor: pointer; letter-spacing: -1px; }
+        .logo span { color: var(--accent); }
+        .btn-panel { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-panel:hover { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+
+        /* CONTENT */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .section-header { margin-bottom: 25px; border-bottom: 3px solid var(--accent); display: inline-block; padding-bottom: 5px; }
+
+        /* CARDS */
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .news-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; transition: 0.3s; }
+        .news-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         
-        .nav-btns { display: flex; gap: 15px; }
-        .btn-nav {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            text-decoration: none;
-        }
-        .btn-nav:hover { background: var(--accent-color); color: var(--main-color); }
+        .gallery-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; height: 220px; background: #eee; }
+        .gallery-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .single-img { grid-column: span 2; }
 
-        /* --- MAIN LAYOUT --- */
-        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .section-title { font-size: 32px; margin-bottom: 30px; border-left: 8px solid var(--accent-color); padding-left: 15px; }
+        .card-content { padding: 20px; flex-grow: 1; }
+        .card-author { font-size: 12px; color: var(--primary); font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .card-title { font-size: 19px; font-weight: 800; margin-bottom: 12px; color: #000; line-height: 1.3; }
+        .card-footer { padding: 15px 20px; background: #f9f9f9; font-size: 13px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #eee; }
 
-        /* --- CARDS / FEED --- */
-        .feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
-        .event-card {
-            background: var(--card-bg);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s;
-            display: flex;
-            flex-direction: column;
-        }
-        .event-card:hover { transform: translateY(-10px); }
+        /* ADMIN FORM */
+        .admin-box { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        .form-group input:focus { border-color: var(--primary); }
+
+        .upload-zone { border: 3px dashed #ccc; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer; transition: 0.3s; background: #fcfcfc; }
+        .upload-zone:hover { border-color: var(--primary); background: #f0f7ff; }
+        .img-previews { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .img-previews img { width: 70px; height: 70px; object-fit: cover; border-radius: 5px; border: 2px solid var(--primary); }
+
+        .btn-pub { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-pub:active { transform: scale(0.98); }
+
+        /* LOGIN */
+        .login-wrap { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         
-        /* Kolaż zdjęć */
-        .card-gallery {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: 220px;
-            gap: 2px;
-            background: #eee;
-        }
-        .card-gallery img { width: 100%; height: 100%; object-fit: cover; }
-        .img-full { grid-column: span 2; }
-
-        .card-body { padding: 25px; flex-grow: 1; }
-        .card-tag { font-size: 12px; font-weight: 900; color: var(--main-color); text-transform: uppercase; margin-bottom: 10px; display: block; }
-        .card-title { font-size: 20px; margin-bottom: 15px; line-height: 1.3; }
-        .card-text { font-size: 15px; color: #666; margin-bottom: 20px; }
-        .card-footer { padding: 15px 25px; border-top: 1px solid #eee; font-size: 13px; color: #999; display: flex; justify-content: space-between; }
-
-        /* --- ADMIN PANEL --- */
-        .admin-section { background: white; padding: 40px; border-radius: 20px; box-shadow: var(--shadow); max-width: 800px; margin: 0 auto; }
-        .form-group { margin-bottom: 25px; }
-        .form-group label { display: block; margin-bottom: 10px; font-weight: bold; color: var(--main-color); }
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-            transition: 0.3s;
-        }
-        .form-group input:focus { border-color: var(--main-color); }
-
-        /* Uploader zdjęć */
-        .upload-area {
-            border: 3px dashed #ddd;
-            padding: 30px;
-            text-align: center;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: 0.3s;
-            background: #fafafa;
-        }
-        .upload-area:hover { border-color: var(--main-color); background: #f0f7ff; }
-        .preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .preview-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid var(--main-color); }
-
-        .btn-action {
-            background: var(--gradient);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 5px 15px rgba(0,51,102,0.3);
-            transition: 0.3s;
-        }
-        .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        .admin-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f9f9f9;
-            margin-top: 10px;
-            border-radius: 10px;
-        }
-        .btn-del { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-
-        /* --- LOGIN --- */
-        .login-box { max-width: 400px; margin: 100px auto; text-align: center; padding: 40px; background: white; border-radius: 20px; box-shadow: var(--shadow); }
-
         .hidden { display: none !important; }
+        .admin-list-item { display: flex; justify-content: space-between; padding: 15px; background: #f8f9fa; margin-top: 10px; border-radius: 8px; align-items: center; }
     </style>
 </head>
 <body>
 
+    <div id="toast">Sukces! Post został opublikowany.</div>
+
     <nav>
-        <div class="nav-container">
+        <div class="nav-inner">
             <div class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></div>
-            <div class="nav-btns">
-                <button class="btn-nav" onclick="showView('home')">Wiadomości</button>
-                <button class="btn-nav" onclick="checkAccess()">Panel Admina</button>
+            <div>
+                <button class="btn-panel" onclick="showView('home')"><i class="fas fa-home"></i> Newsy</button>
+                <button class="btn-panel" onclick="checkAuth()"><i class="fas fa-user-cog"></i> Panel Admina</button>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        
         <div id="view-home">
-            <h1 class="section-title">Najnowsze Wydarzenia</h1>
-            <div class="feed" id="news-feed">
-                </div>
+            <h2 class="section-header">Najnowsze wiadomości z Ełku</h2>
+            <div class="news-grid" id="news-feed"></div>
         </div>
 
         <div id="view-login" class="hidden">
-            <div class="login-box">
-                <i class="fas fa-lock fa-3x" style="color: var(--main-color); margin-bottom: 20px;"></i>
-                <h2>Panel Chroniony</h2>
-                <p style="margin-bottom: 20px; color: #777;">Podaj hasło administratora, aby kontynuować.</p>
-                <input type="password" id="admin-pass" class="form-group" style="text-align:center" placeholder="Hasło: elk2026">
-                <button class="btn-action" onclick="login()">Zaloguj się</button>
+            <div class="login-wrap">
+                <i class="fas fa-shield-alt fa-3x" style="color:var(--primary); margin-bottom:15px"></i>
+                <h2>Strefa Redakcyjna</h2>
+                <p style="color:#666; margin-bottom:20px">Wpisz hasło dostępu</p>
+                <input type="password" id="pass-field" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; text-align:center;" placeholder="Hasło...">
+                <button class="btn-pub" onclick="doLogin()">Zaloguj</button>
             </div>
         </div>
 
         <div id="view-admin" class="hidden">
-            <div class="admin-section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px">
-                    <h2>Dodaj Nowy Artykuł</h2>
-                    <button class="btn-del" onclick="logout()">Wyloguj</button>
+            <div class="admin-box">
+                <div style="display:flex; justify-content:space-between; margin-bottom:25px">
+                    <h2>Panel Autorski</h2>
+                    <button onclick="doLogout()" style="padding:5px 10px; cursor:pointer">Wyloguj</button>
                 </div>
 
                 <div class="form-group">
                     <label>Tytuł Eventu</label>
-                    <input type="text" id="post-title" placeholder="Np. Dni Ełku 2026 - Wielki Finał">
+                    <input type="text" id="post-title" placeholder="Wpisz chwytliwy tytuł...">
+                </div>
+
+                <div class="form-group">
+                    <label>Autor / Redaktor</label>
+                    <input type="text" id="post-author" placeholder="Twoje imię i nazwisko...">
                 </div>
 
                 <div class="form-group">
                     <label>Treść Artykułu</label>
-                    <textarea id="post-content" rows="6" placeholder="Opisz co, gdzie i kiedy..."></textarea>
+                    <textarea id="post-content" rows="6" placeholder="Co się wydarzyło w Ełku?"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Galeria Zdjęć (Wybierz wiele)</label>
-                    <div class="upload-area" onclick="document.getElementById('file-input').click()">
-                        <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--main-color); margin-bottom:10px"></i>
-                        <p>Kliknij tutaj, aby dodać zdjęcia z dysku</p>
-                        <input type="file" id="file-input" multiple accept="image/*" class="hidden" onchange="handleFiles(this.files)">
+                    <label>Galeria Zdjęć</label>
+                    <div class="upload-zone" onclick="document.getElementById('img-input').click()">
+                        <i class="fas fa-images fa-2x" style="color:var(--primary)"></i>
+                        <p>Kliknij, aby dodać zdjęcia (wybierz wiele)</p>
+                        <input type="file" id="img-input" multiple accept="image/*" class="hidden" onchange="previewImages(this.files)">
                     </div>
-                    <div class="preview-container" id="preview-box">
-                        </div>
+                    <div class="img-previews" id="preview-area"></div>
                 </div>
 
-                <button class="btn-action" onclick="publishPost()">Opublikuj na Stronie</button>
+                <button class="btn-pub" id="save-btn" onclick="publishPost()">Opublikuj na Stronie</button>
 
-                <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
-                
-                <h3>Zarządzaj Postami</h3>
-                <div id="admin-list">
-                    </div>
+                <h3 style="margin-top:40px; border-top:1px solid #eee; padding-top:20px">Twoje posty:</h3>
+                <div id="admin-list"></div>
             </div>
         </div>
-
     </div>
 
     <script>
-        // BAZA DANYCH W PAMIĘCI PRZEGLĄDARKI
-        let posts = JSON.parse(localStorage.getItem('elk_pro_data')) || [];
-        let uploadedImages = [];
+        let db = JSON.parse(localStorage.getItem('elk_v4_db')) || [];
+        let currentFiles = [];
 
-        // NAWIGACJA
-        function showView(view) {
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-login').classList.add('hidden');
-            document.getElementById('view-admin').classList.add('hidden');
-            document.getElementById('view-' + view).classList.remove('hidden');
-            if(view === 'home') renderHome();
-            if(view === 'admin') renderAdmin();
+        function showView(v) {
+            ['home', 'login', 'admin'].forEach(view => document.getElementById('view-'+view).classList.add('hidden'));
+            document.getElementById('view-'+v).classList.remove('hidden');
+            if(v === 'home') renderHome();
+            if(v === 'admin') renderAdminList();
         }
 
-        function checkAccess() {
+        function checkAuth() {
             if(sessionStorage.getItem('isLogged') === 'true') showView('admin');
             else showView('login');
         }
 
-        function login() {
-            if(document.getElementById('admin-pass').value === 'elk2026') {
+        function doLogin() {
+            if(document.getElementById('pass-field').value === 'diax67') {
                 sessionStorage.setItem('isLogged', 'true');
                 showView('admin');
-            } else alert('Błędne hasło!');
+            } else { alert("Hasło niepoprawne!"); }
         }
 
-        function logout() {
+        function doLogout() {
             sessionStorage.removeItem('isLogged');
             showView('home');
         }
 
-        // OBSŁUGA ZDJĘĆ
-        function handleFiles(files) {
-            uploadedImages = [];
-            document.getElementById('preview-box').innerHTML = '';
+        function previewImages(files) {
+            currentFiles = [];
+            const area = document.getElementById('preview-area');
+            area.innerHTML = '';
             
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    uploadedImages.push(e.target.result);
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-img';
-                    document.getElementById('preview-box').appendChild(img);
+                    currentFiles.push(e.target.result);
+                    area.innerHTML += `<img src="${e.target.result}">`;
                 };
                 reader.readAsDataURL(file);
             });
         }
 
-        // DODAWANIE POSTA
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.backgroundColor = isError ? "#c0392b" : "#27ae60";
+            t.className = "show";
+            setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+        }
+
         function publishPost() {
             const title = document.getElementById('post-title').value;
+            const author = document.getElementById('post-author').value;
             const content = document.getElementById('post-content').value;
 
-            if(!title || !content || uploadedImages.length === 0) {
-                alert("Musisz dodać tytuł, treść i przynajmniej jedno zdjęcie!");
+            if(!title || !author || !content || currentFiles.length === 0) {
+                showToast("Wypełnij wszystkie pola i dodaj zdjęcia!", true);
                 return;
             }
 
-            const newPost = {
+            const post = {
                 id: Date.now(),
-                title: title,
-                content: content,
-                images: uploadedImages,
+                title, author, content,
+                images: currentFiles,
                 date: new Date().toLocaleDateString('pl-PL'),
-                timestamp: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})
+                time: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})
             };
 
-            posts.unshift(newPost);
-            localStorage.setItem('elk_pro_data', JSON.stringify(posts));
-            
-            // RESET FORMULARZA
-            document.getElementById('post-title').value = '';
-            document.getElementById('post-content').value = '';
-            document.getElementById('preview-box').innerHTML = '';
-            uploadedImages = [];
-            
-            alert('Artykuł opublikowany!');
-            renderAdmin();
+            try {
+                db.unshift(post);
+                localStorage.setItem('elk_v4_db', JSON.stringify(db));
+                
+                // RESET
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-author').value = '';
+                document.getElementById('post-content').value = '';
+                document.getElementById('preview-area').innerHTML = '';
+                currentFiles = [];
+                
+                showToast("Artykuł opublikowany pomyślnie!");
+                renderAdminList();
+            } catch(e) {
+                showToast("Błąd: Zdjęcia są za duże! Spróbuj dodać mniejsze pliki.", true);
+                db.shift(); // usuwamy niedodany post z tablicy
+            }
         }
 
         function deletePost(id) {
-            if(confirm('Usunąć ten artykuł na stałe?')) {
-                posts = posts.filter(p => p.id !== id);
-                localStorage.setItem('elk_pro_data', JSON.stringify(posts));
-                renderAdmin();
+            if(confirm("Usunąć ten post?")) {
+                db = db.filter(p => p.id !== id);
+                localStorage.setItem('elk_v4_db', JSON.stringify(db));
+                renderAdminList();
             }
         }
 
-        // RENDEROWANIE STRONY GŁÓWNEJ
         function renderHome() {
-            const container = document.getElementById('news-feed');
-            container.innerHTML = '';
-
-            if(posts.length === 0) {
-                container.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">Brak nowych wiadomości w Ełku.</p>';
-                return;
-            }
-
-            posts.forEach(post => {
-                const galleryHtml = `
-                    <div class="card-gallery">
-                        <img src="${post.images[0]}" class="${post.images.length === 1 ? 'img-full' : ''}">
-                        ${post.images[1] ? `<img src="${post.images[1]}">` : ''}
+            const feed = document.getElementById('news-feed');
+            feed.innerHTML = db.length ? db.map(p => `
+                <div class="news-card">
+                    <div class="gallery-preview">
+                        <img src="${p.images[0]}" class="${p.images.length === 1 ? 'single-img' : ''}">
+                        ${p.images[1] ? `<img src="${p.images[1]}">` : ''}
                     </div>
-                `;
-
-                container.innerHTML += `
-                    <div class="event-card">
-                        ${galleryHtml}
-                        <div class="card-body">
-                            <span class="card-tag">Wiadomości lokalne</span>
-                            <h2 class="card-title">${post.title}</h2>
-                            <p class="card-text">${post.content.substring(0, 150)}...</p>
-                        </div>
-                        <div class="card-footer">
-                            <span><i class="far fa-calendar-alt"></i> ${post.date}</span>
-                            <span><i class="far fa-clock"></i> ${post.timestamp}</span>
-                        </div>
+                    <div class="card-content">
+                        <span class="card-author"><i class="fas fa-user-edit"></i> ${p.author}</span>
+                        <h3 class="card-title">${p.title}</h3>
+                        <p style="color:#555; font-size:14px">${p.content.substring(0, 160)}...</p>
                     </div>
-                `;
-            });
+                    <div class="card-footer">
+                        <span><i class="far fa-calendar-alt"></i> ${p.date}</span>
+                        <span><i class="far fa-clock"></i> ${p.time}</span>
+                    </div>
+                </div>
+            `).join('') : '<p style="text-align:center; grid-column:1/-1; padding:50px; color:#999;">Brak postów do wyświetlenia.</p>';
         }
 
-        // RENDEROWANIE LISTY W PANELU
-        function renderAdmin() {
+        function renderAdminList() {
             const list = document.getElementById('admin-list');
-            list.innerHTML = posts.map(p => `
+            list.innerHTML = db.map(p => `
                 <div class="admin-list-item">
-                    <span><strong>${p.title}</strong> (${p.date})</span>
-                    <button class="btn-del" onclick="deletePost(${p.id})">Usuń</button>
+                    <span><strong>${p.title}</strong></span>
+                    <button onclick="deletePost(${p.id})" class="btn-panel" style="background:var(--danger); border:none">Usuń</button>
                 </div>
             `).join('');
         }
 
-        // START
         renderHome();
     </script>
 </body>
