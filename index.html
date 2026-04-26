@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM v60.0 | OPEN EDITION</title>
+    <title>RADAR SYSTEM v61.0 | WSZYSTKIE FUNKCJE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,109 +16,89 @@
         html, body { height: 100%; width: 100%; background-color: var(--secondary); overflow: hidden; position: fixed; }
         #map { position: absolute; inset: 0; z-index: 10; background: #cbd5e1; }
 
-        /* Splash */
+        /* Splash Screen */
         #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .setup-container { width: 100%; max-width: 400px; padding: 30px; }
         
-        .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 20px; border-radius: 25px; font-weight: 800; outline: none; margin-bottom: 15px; transition: 0.3s; }
+        .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 20px; border-radius: 25px; font-weight: 800; outline: none; margin-bottom: 15px; }
         .in-heavy:focus { border-color: var(--primary); background: white; }
 
-        .btn-go { width: 100%; background: var(--secondary); color: white; padding: 22px; border-radius: 25px; font-weight: 900; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; margin-bottom: 12px; }
-        .city-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-
-        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 45px 45px 0 0; padding: 40px 30px; transform: translateY(110%); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 -20px 60px rgba(0,0,0,0.15); max-height: 85vh; overflow-y: auto; }
+        /* UI Elements */
+        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 45px 45px 0 0; padding: 35px 25px; transform: translateY(110%); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.15); }
         .sheet.active { transform: translateY(0); }
         
+        .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 12px; }
         .m-radar { width: 55px; height: 55px; border: 4px solid white; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        
+        .event-item { background: #f8fafc; padding: 20px; border-radius: 25px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <div class="setup-container">
+        <div class="setup-container text-center">
             <div id="step-1">
-                <h1 id="main-welcome" class="text-4xl font-black italic text-center mb-2">Witamy!</h1>
-                <p class="text-center text-slate-400 font-bold text-[10px] uppercase mb-10 tracking-[0.3em]">System Radarowy v60.0</p>
-                
-                <p class="text-xs font-black uppercase text-slate-400 mb-2 ml-2">Twój podpis:</p>
-                <input type="text" id="user-nick" placeholder="Np. SzybkiJoe" class="in-heavy">
-                
-                <button id="btn-next" class="btn-go bg-amber-500 shadow-amber-200">
-                    <span>ZACZYNAMY</span>
-                    <i class="fa-solid fa-arrow-right"></i>
+                <h1 id="welcome-txt" class="text-4xl font-black italic mb-2">RADAR</h1>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-10">Wszystkie funkcje przywrócone</p>
+                <input type="text" id="user-nick" placeholder="Podaj swój Nick" class="in-heavy text-center">
+                <button id="btn-start" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl flex justify-between items-center px-10">
+                    <span>ZACZYNAMY</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </div>
-
-            <div id="step-2" class="hidden">
+            <div id="step-2" class="hidden text-left">
                 <h2 class="text-3xl font-black italic mb-8">Wybierz miasto</h2>
-                <div id="city-gorzow" class="city-card">
-                    <span class="font-black italic uppercase text-slate-800">Gorzów Wlkp.</span>
-                    <i class="fa-solid fa-location-crosshairs text-amber-500 text-xl"></i>
-                </div>
-                <div class="city-card opacity-50">
-                    <span class="font-black italic uppercase text-slate-400">Poznań</span>
-                    <i class="fa-solid fa-lock text-slate-300"></i>
+                <div id="pick-gorzow" class="city-card">
+                    <span class="font-black italic uppercase">Gorzów Wlkp.</span>
+                    <i class="fa-solid fa-location-dot text-amber-500"></i>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="fixed top-8 left-4 right-4 z-[1000] flex justify-between items-center bg-white/95 backdrop-blur-lg p-4 rounded-[30px] shadow-2xl border border-white">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500 shadow-inner"><i class="fa-solid fa-radar text-xl"></i></div>
-            <div>
-                <h2 id="hud-city" class="text-sm font-black uppercase italic">Wybierz miasto</h2>
-                <p id="hud-user" class="text-[10px] font-bold text-amber-600 uppercase tracking-tighter">Gość</p>
-            </div>
-        </div>
-        <button onclick="location.reload()" class="w-10 h-10 flex items-center justify-center text-slate-300"><i class="fa-solid fa-rotate"></i></button>
     </div>
 
     <div id="map"></div>
 
-    <div class="fixed bottom-10 left-0 right-0 z-[1000] flex justify-center px-6 pointer-events-none gap-4">
-        <button id="main-add-btn" class="pointer-events-auto bg-slate-900 text-white flex-1 max-w-[200px] py-6 rounded-[35px] font-black italic shadow-2xl border-b-4 border-amber-500 flex items-center justify-center gap-4 active:scale-95 transition-all">
+    <div class="fixed top-8 left-4 right-4 z-[1000] flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-[30px] shadow-2xl">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500"><i class="fa-solid fa-tower-broadcast"></i></div>
+            <div>
+                <h2 id="hud-city" class="text-sm font-black uppercase italic">RADAR</h2>
+                <p id="hud-user" class="text-[10px] font-bold text-amber-600">GOŚĆ</p>
+            </div>
+        </div>
+        <button id="btn-show-events" class="w-12 h-12 bg-slate-100 rounded-2xl text-slate-600 flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-calendar-day"></i>
+        </button>
+    </div>
+
+    <div class="fixed bottom-10 left-0 right-0 z-[1000] flex justify-center px-6 gap-4 pointer-events-none">
+        <button id="btn-add" class="pointer-events-auto bg-slate-900 text-white flex-1 max-w-[200px] py-6 rounded-[35px] font-black italic shadow-2xl border-b-4 border-amber-500 flex items-center justify-center gap-3 active:scale-95 transition-all">
             <i class="fa-solid fa-plus-circle text-amber-500 text-2xl"></i> DODAJ
         </button>
     </div>
 
-    <div id="sheet-guide" class="sheet">
-        <h2 class="text-3xl font-black italic mb-6">Jak to działa?</h2>
-        <div class="space-y-4 mb-8">
-            <div class="flex gap-4 items-center bg-slate-50 p-4 rounded-2xl">
-                <i class="fa-solid fa-1 text-amber-500 font-black text-2xl"></i>
-                <p class="font-bold text-slate-600">Klikasz przycisk "DODAJ" na dole.</p>
-            </div>
-            <div class="flex gap-4 items-center bg-slate-50 p-4 rounded-2xl">
-                <i class="fa-solid fa-2 text-amber-500 font-black text-2xl"></i>
-                <p class="font-bold text-slate-600">Dotykasz miejsca na mapie, gdzie jest kontrola.</p>
-            </div>
-            <div class="flex gap-4 items-center bg-slate-50 p-4 rounded-2xl">
-                <i class="fa-solid fa-3 text-amber-500 font-black text-2xl"></i>
-                <p class="font-bold text-slate-600">Wpisujesz numer linii i gotowe!</p>
-            </div>
+    <div id="sheet-events" class="sheet">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black italic">Trwające Wydarzenia</h2>
+            <button class="close-btn text-slate-300"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
-        <button id="close-guide" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl shadow-amber-100">ZACZYNAMY!</button>
+        <div id="events-list" class="space-y-4">
+            <p class="text-center text-slate-400 font-bold uppercase text-[10px]">Brak aktywnych wydarzeń</p>
+        </div>
     </div>
 
     <div id="sheet-type" class="sheet">
-        <h3 class="text-center font-black text-xs uppercase text-slate-400 mb-8">Co zgłaszasz?</h3>
+        <h3 class="text-center font-black text-xs uppercase text-slate-400 mb-8">Typ zgłoszenia</h3>
         <div class="grid grid-cols-3 gap-4">
-            <div onclick="selectType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center p-8 bg-red-50 rounded-[35px] text-red-500 border-2 border-red-100 cursor-pointer"><i class="fa-solid fa-user-secret text-4xl"></i></div>
-            <div onclick="selectType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center p-8 bg-amber-50 rounded-[35px] text-amber-500 border-2 border-amber-100 cursor-pointer"><i class="fa-solid fa-triangle-exclamation text-4xl"></i></div>
-            <div onclick="selectType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center p-8 bg-blue-50 rounded-[35px] text-blue-500 border-2 border-blue-100 cursor-pointer"><i class="fa-solid fa-clock text-4xl"></i></div>
+            <div onclick="setType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center p-8 bg-red-50 rounded-[35px] text-red-500 border-2 border-red-100"><i class="fa-solid fa-user-secret text-4xl"></i></div>
+            <div onclick="setType('WYDARZENIE','fa-calendar-star','#8b5cf6')" class="flex flex-col items-center p-8 bg-purple-50 rounded-[35px] text-purple-500 border-2 border-purple-100"><i class="fa-solid fa-calendar-star text-4xl"></i></div>
+            <div onclick="setType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center p-8 bg-amber-50 rounded-[35px] text-amber-500 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-4xl"></i></div>
         </div>
     </div>
 
     <div id="sheet-form" class="sheet">
-        <h2 class="text-2xl font-black italic mb-6">Podaj szczegóły</h2>
-        <input type="text" id="line-val" placeholder="LINIA" class="in-heavy text-center text-4xl uppercase mb-6" maxlength="4">
-        <button id="btn-publish" class="btn-go bg-slate-900 shadow-xl">
-            <span>OPUBLIKUJ</span>
-            <i class="fa-solid fa-check text-amber-500"></i>
-        </button>
+        <h2 class="text-2xl font-black italic mb-6">Szczegóły</h2>
+        <input type="text" id="val-line" placeholder="LINIA / NAZWA" class="in-heavy text-center text-3xl uppercase mb-6">
+        <button id="btn-save" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase shadow-xl">OPUBLIKUJ</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -130,111 +110,69 @@
         const app = initializeApp(fbConfig);
         const db = getDatabase(app);
 
-        let state = { 
-            nick: localStorage.getItem('radar_nick') || '',
-            city: '',
-            pos: null,
-            type: null,
-            icon: null,
-            color: null,
-            markers: {}
-        };
+        let st = { nick: localStorage.getItem('radar_nick')||'', city: '', pos: null, sel: null, markers: {} };
 
         const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.73, 15.23], 13);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // --- INICJALIZACJA POWITANIA ---
-        const welcomeTitle = document.getElementById('main-welcome');
-        const nextBtn = document.getElementById('btn-next');
-        const nickInput = document.getElementById('user-nick');
-
-        if (state.nick) {
-            welcomeTitle.innerText = "Witaj ponownie!";
-            nickInput.value = state.nick;
-        }
-
-        nextBtn.onclick = () => {
-            const val = nickInput.value.trim();
-            if(!val) return alert("Podaj jakikolwiek nick!");
-            state.nick = val;
-            localStorage.setItem('radar_nick', val);
-            
+        // --- AUTH/SETUP ---
+        if(st.nick) { document.getElementById('welcome-txt').innerText = "Witaj ponownie!"; document.getElementById('user-nick').value = st.nick; }
+        
+        document.getElementById('btn-start').onclick = () => {
+            const n = document.getElementById('user-nick').value.trim();
+            if(!n) return alert("Podaj Nick!");
+            st.nick = n; localStorage.setItem('radar_nick', n);
             document.getElementById('step-1').classList.add('hidden');
             document.getElementById('step-2').classList.remove('hidden');
         };
 
-        // --- WYBÓR MIASTA ---
-        document.getElementById('city-gorzow').onclick = () => {
-            state.city = 'gorzow';
+        document.getElementById('pick-gorzow').onclick = () => {
+            st.city = 'gorzow';
             document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
             document.getElementById('hud-city').innerText = "Gorzów Wlkp.";
-            document.getElementById('hud-user').innerText = state.nick;
+            document.getElementById('hud-user').innerText = st.nick;
 
-            // Jeśli pierwszy raz - pokaż poradnik
-            if(!localStorage.getItem('guide_done')) {
-                setTimeout(() => document.getElementById('sheet-guide').classList.add('active'), 1000);
-            }
-
-            // Ładowanie markerów
             onValue(ref(db, `v38/gorzow/alerts`), (s) => {
                 const data = s.val() || {};
+                const list = document.getElementById('events-list');
+                list.innerHTML = "";
+                
                 Object.values(data).forEach(v => {
-                    if(!state.markers[v.lat+v.lng]) {
-                        const iconHtml = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="text-[10px] font-black mt-1">${v.line}</div></div>`;
-                        state.markers[v.lat+v.lng] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:iconHtml, iconAnchor:[27,27] }) }).addTo(map);
+                    // Dodaj na mapę
+                    if(!st.markers[v.lat+v.lng]) {
+                        const icon = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="text-[10px] font-black mt-1">${v.line}</div></div>`;
+                        st.markers[v.lat+v.lng] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[27,27] }) }).addTo(map);
                     }
+                    // Dodaj do listy wydarzeń
+                    const el = document.createElement('div');
+                    el.className = "event-item";
+                    el.innerHTML = `<div class="flex justify-between items-center"><span class="font-black italic text-lg" style="color:${v.color}">${v.line}</span><span class="text-[9px] font-black bg-slate-200 px-2 py-1 rounded-full text-slate-500">${new Date(v.time).toLocaleTimeString()}</span></div><p class="text-[10px] font-bold text-slate-400 mt-2 uppercase">Dodane przez: ${v.author}</p>`;
+                    list.appendChild(el);
                 });
             });
         };
 
-        // --- SYSTEM DODAWANIA ---
-        document.getElementById('main-add-btn').onclick = () => {
-            const h = document.createElement('div');
-            h.id = "tap-hint";
-            h.className = "fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black z-[5000] border-2 border-amber-500 shadow-2xl animate-bounce";
-            h.innerText = "KLIKNIJ NA MAPIE";
+        // --- ADDING ---
+        document.getElementById('btn-add').onclick = () => {
+            const h = document.createElement('div'); h.id="hint"; h.className="fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full font-black z-[5000] border-2 border-amber-500 shadow-2xl"; h.innerText="DOTKNIJ MIEJSCA NA MAPIE";
             document.body.appendChild(h);
         };
 
-        map.on('click', (e) => {
-            const h = document.getElementById('tap-hint');
-            if(h) {
-                state.pos = e.latlng;
-                h.remove();
-                document.getElementById('sheet-type').classList.add('active');
-            }
-        });
+        map.on('click', (e) => { if(document.getElementById('hint')) { st.pos = e.latlng; document.getElementById('hint').remove(); document.getElementById('sheet-type').classList.add('active'); } });
 
-        window.selectType = (t, i, c) => {
-            state.type = t; state.icon = i; state.color = c;
-            document.getElementById('sheet-type').classList.remove('active');
-            document.getElementById('sheet-form').classList.add('active');
+        window.setType = (t, i, c) => { st.sel = {t, i, c}; document.getElementById('sheet-type').classList.remove('active'); document.getElementById('sheet-form').classList.add('active'); };
+
+        document.getElementById('btn-save').onclick = () => {
+            const l = document.getElementById('val-line').value.toUpperCase();
+            if(!l) return;
+            push(ref(db, `v38/${st.city}/alerts`), { line:l, lat:st.pos.lat, lng:st.pos.lng, type:st.sel.t, icon:st.sel.i, color:st.sel.c, author:st.nick, time:Date.now() });
+            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
+            document.getElementById('val-line').value = '';
         };
 
-        document.getElementById('btn-publish').onclick = () => {
-            const line = document.getElementById('line-val').value.toUpperCase();
-            if(!line) return alert("Podaj numer linii!");
-            
-            push(ref(db, `v38/${state.city}/alerts`), {
-                line, 
-                lat: state.pos.lat, 
-                lng: state.pos.lng,
-                type: state.type,
-                icon: state.icon,
-                color: state.color,
-                author: state.nick,
-                time: Date.now()
-            });
-
-            document.getElementById('sheet-form').classList.remove('active');
-            document.getElementById('line-val').value = '';
-        };
-
-        document.getElementById('close-guide').onclick = () => {
-            localStorage.setItem('guide_done', 'true');
-            document.getElementById('sheet-guide').classList.remove('active');
-        };
-
+        // --- SHEETS CONTROL ---
+        document.getElementById('btn-show-events').onclick = () => document.getElementById('sheet-events').classList.add('active');
+        document.querySelectorAll('.close-btn').forEach(b => b.onclick = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active')));
     </script>
 </body>
 </html>
