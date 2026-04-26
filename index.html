@@ -2,95 +2,37 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | v12</title>
+    <title>Ełk Nasze Eventy | TEST v13</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --blue: #0066cc; --yellow: #ffcc00; --bg: #0a0a0a; --card: #161616; --text: #f0f0f0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: var(--text); }
-
-        header { background: #000; border-bottom: 3px solid var(--blue); padding: 15px 20px; position: sticky; top: 0; z-index: 1000; }
-        .h-wrap { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 30px; font-weight: 900; color: #fff; cursor: pointer; text-decoration: none; }
-        .logo span { color: var(--yellow); }
-
-        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 350px; gap: 40px; }
-
-        /* --- STRONA GŁÓWNA --- */
-        .news-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
-        .post { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #222; cursor: pointer; transition: 0.3s; }
-        .post:hover { transform: translateY(-5px); border-color: var(--blue); }
-        .post-img { width: 100%; height: 240px; object-fit: cover; background: #000; }
-        .post-info { padding: 25px; }
-        .post-info h2 { font-size: 22px; margin-bottom: 10px; }
-        .post-info p { color: #888; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-        /* --- ARTYKUŁ --- */
-        .art-view { background: var(--card); padding: 50px; border-radius: 15px; grid-column: span 2; max-width: 1000px; margin: 0 auto; }
-        .art-text { font-size: 19px; line-height: 1.9; color: #ddd; white-space: pre-wrap; margin: 30px 0; }
-        .gallery img { width: 100%; border-radius: 10px; margin-bottom: 30px; }
-
-        /* --- ADMIN --- */
-        .admin-box { background: var(--card); padding: 40px; border-radius: 15px; grid-column: span 2; }
-        input, textarea { width: 100%; padding: 15px; background: #222; border: 1px solid #333; color: #fff; border-radius: 8px; margin-bottom: 15px; }
-        .btn { padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: var(--blue); color: #fff; width: 100%; }
-
-        .hidden { display: none !important; }
-        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; padding: 20px; }
+        .box { background: #161616; padding: 20px; border-radius: 10px; border: 1px solid #333; max-width: 800px; margin: 0 auto; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; background: #222; border: 1px solid #444; color: white; }
+        button { background: #0066cc; color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        .post-card { background: #222; padding: 15px; margin-top: 10px; border-radius: 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="loader"><h2>Przesyłanie do węzła ELK...</h2></div>
-
-<header>
-    <div class="h-wrap">
-        <div class="logo" onclick="showView('home')">EŁK <span>Nasze Eventy</span></div>
-        <button onclick="checkAuth()" style="background:var(--blue); color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer">Panel Redakcji</button>
-    </div>
-</header>
-
-<div class="container">
-    <div id="view-home" style="display:contents">
-        <main class="news-grid" id="main-grid"></main>
-        <aside>
-            <h3 style="border-bottom: 2px solid var(--blue); padding-bottom:10px; margin-bottom:20px">INFORMACJE</h3>
-            <div id="links-side"></div>
-        </aside>
+<div class="box">
+    <h1>Test połączenia z Firebase (Węzeł: elk)</h1>
+    
+    <div id="admin-panel">
+        <input type="text" id="t" placeholder="Tytuł testowy">
+        <textarea id="c" rows="5" placeholder="Treść testowa"></textarea>
+        <button onclick="sendTest()">WYŚLIJ TEST</button>
     </div>
 
-    <div id="view-article" class="hidden" style="grid-column: span 2;">
-        <button onclick="showView('home')" style="margin-bottom:20px; padding:10px; cursor:pointer">← POWRÓT</button>
-        <div class="art-view" id="full-post-area"></div>
-    </div>
-
-    <div id="view-login" class="hidden" style="grid-column: span 2;">
-        <div style="max-width: 400px; margin: 100px auto; background: var(--card); padding: 50px; border-radius: 20px; text-align: center;">
-            <h2>Zaloguj się</h2>
-            <input type="password" id="admin-pass" placeholder="Hasło...">
-            <button class="btn" onclick="doLogin()">Weryfikuj</button>
-        </div>
-    </div>
-
-    <div id="view-admin" class="hidden" style="grid-column: span 2;">
-        <div class="admin-box">
-            <h2>Dodaj wpis do bazy ELK</h2>
-            <input type="text" id="p-title" placeholder="Tytuł">
-            <input type="text" id="p-author" placeholder="Autor">
-            <textarea id="p-content" rows="10" placeholder="Treść artykułu..."></textarea>
-            <input type="file" id="p-imgs" multiple accept="image/*">
-            <button class="btn" onclick="saveToFirebase()">OPUBLIKUJ</button>
-            <hr style="margin:40px 0; border-color:#333">
-            <div id="p-admin-list"></div>
-        </div>
-    </div>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #333;">
+    
+    <h3>Wpisy w bazie:</h3>
+    <div id="display">Ładowanie danych z Firebase...</div>
 </div>
 
 <script>
-    // --- KONFIGURACJA ---
+    // --- TWOJE DANE Z FIREBASE ---
     const firebaseConfig = {
         apiKey: "TWOJE_API_KEY",
         authDomain: "mzk-by-facio.firebaseapp.com",
@@ -99,98 +41,60 @@
         appId: "APP_ID"
     };
 
+    // Inicjalizacja
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const root = "elk"; // NOWY WĘZEŁ
 
-    // Widoki
-    function showView(v) {
-        document.querySelectorAll('.container > div').forEach(el => el.classList.add('hidden'));
-        document.getElementById('view-'+v).classList.remove('hidden');
-        window.scrollTo(0,0);
-    }
+    // Funkcja wysyłania
+    async function sendTest() {
+        const title = document.getElementById('t').value;
+        const content = document.getElementById('c').value;
 
-    function checkAuth() { sessionStorage.getItem('logged') ? showView('admin') : showView('login'); }
-    function doLogin() {
-        if(document.getElementById('admin-pass').value === 'diax67') {
-            sessionStorage.setItem('logged', 'true');
-            showView('admin');
-        } else { alert("Błędne hasło!"); }
-    }
+        if(!title) return alert("Wpisz chociaż tytuł!");
 
-    // Przesyłanie
-    async function saveToFirebase() {
-        const title = document.getElementById('p-title').value;
-        const content = document.getElementById('p-content').value;
-        const author = document.getElementById('p-author').value;
-        const files = document.getElementById('p-imgs').files;
-
-        if(!title || !content) return alert("Podaj tytuł i treść!");
-        
-        document.getElementById('loader').style.display = 'flex';
-
-        let images = [];
-        for(let f of files) {
-            const b64 = await new Promise(res => {
-                const r = new FileReader();
-                r.readAsDataURL(f);
-                r.onload = () => res(r.result);
+        try {
+            await db.ref("elk/posts").push({
+                title: title,
+                content: content,
+                ts: Date.now(),
+                date: new Date().toLocaleString()
             });
-            images.push(b64);
+            alert("Zadziałało! Dane są w Firebase.");
+            document.getElementById('t').value = "";
+            document.getElementById('c').value = "";
+        } catch (e) {
+            console.error(e);
+            alert("BŁĄD: " + e.message);
+        }
+    }
+
+    // Pobieranie w czasie rzeczywistym
+    db.ref("elk/posts").on('value', (snap) => {
+        const div = document.getElementById('display');
+        div.innerHTML = "";
+        
+        if(!snap.exists()) {
+            div.innerHTML = "Baza jest pusta.";
+            return;
         }
 
-        await db.ref(root + "/posts").push({
-            title, content, author, images,
-            date: new Date().toLocaleString(),
-            ts: Date.now()
-        });
-
-        location.reload();
-    }
-
-    // Pobieranie (Real-time)
-    db.ref(root + "/posts").on('value', snap => {
-        const grid = document.getElementById('main-grid');
-        const adm = document.getElementById('p-admin-list');
-        grid.innerHTML = ""; adm.innerHTML = "<h3>Zarządzanie wpisami:</h3>";
-
-        let posts = [];
-        snap.forEach(c => { posts.push({id: c.key, ...c.val()}); });
-        posts.sort((a,b) => b.ts - a.ts);
-
-        posts.forEach(p => {
-            const img = p.images ? p.images[0] : '';
-            grid.innerHTML += `
-                <div class="post" onclick="openPost('${p.id}')">
-                    <img src="${img}" class="post-img">
-                    <div class="post-info">
-                        <h2>${p.title}</h2>
-                        <p>${p.content}</p>
-                        <small style="color:var(--yellow)">${p.date}</small>
-                    </div>
-                </div>`;
-            
-            adm.innerHTML += `
-                <div style="display:flex; justify-content:space-between; background:#222; padding:10px; border-radius:5px; margin-top:10px">
-                    <span>${p.title}</span>
-                    <button onclick="db.ref('${root}/posts/${p.id}').remove()" style="color:red; background:none; border:none; cursor:pointer">USUŃ</button>
-                </div>`;
+        snap.forEach(child => {
+            const data = child.val();
+            div.innerHTML += `
+                <div class="post-card">
+                    <strong>${data.title}</strong><br>
+                    <small>${data.date}</small>
+                    <p>${data.content}</p>
+                    <button onclick="deletePost('${child.key}')" style="background:red; padding:5px 10px; font-size:10px">USUŃ</button>
+                </div>
+            `;
         });
     });
 
-    async function openPost(id) {
-        const s = await db.ref(root + "/posts/" + id).once('value');
-        const p = s.val();
-        let gal = (p.images || []).map(i => `<img src="${i}">`).join('');
-
-        document.getElementById('full-post-area').innerHTML = `
-            <h1 style="font-size:40px; line-height:1.1">${p.title}</h1>
-            <p style="margin:20px 0; color:var(--yellow)">Redakcja: ${p.author} | ${p.date}</p>
-            <div class="art-text">${p.content}</div>
-            <div class="gallery">${gal}</div>
-        `;
-        showView('article');
+    function deletePost(id) {
+        db.ref("elk/posts/" + id).remove();
     }
 </script>
+
 </body>
 </html>
