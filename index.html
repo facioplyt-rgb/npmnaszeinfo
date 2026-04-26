@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | Wszystko o eventach</title>
+    <title>Ełk Nasze Eventy | Portal v42 Cloud</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-storage-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -19,10 +18,9 @@
             --danger: #ff3333;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
 
-        /* --- UI ELEMENTS --- */
         header { background: #000; border-bottom: 3px solid var(--primary-blue); position: sticky; top: 0; z-index: 1000; }
         .header-top { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
         .logo { font-size: 30px; font-weight: 900; color: #fff; cursor: pointer; text-decoration: none; }
@@ -36,11 +34,11 @@
         .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 380px; gap: 40px; }
 
         /* --- LOADER --- */
-        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid var(--accent-yellow); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        #loader { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction:column; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid var(--accent-yellow); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* --- GRID --- */
+        /* --- NEWS GRID --- */
         .news-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
         .featured-post { grid-column: span 2; position: relative; height: 500px; border-radius: 12px; overflow: hidden; cursor: pointer; }
         .featured-post img { width: 100%; height: 100%; object-fit: cover; }
@@ -48,7 +46,7 @@
         
         .standard-post { background: var(--card-dark); border-radius: 12px; overflow: hidden; border: 1px solid #222; cursor: pointer; transition: 0.3s; }
         .standard-post:hover { transform: translateY(-5px); border-color: var(--primary-blue); }
-        .post-img-box { height: 240px; background: #000; }
+        .post-img-box { height: 240px; background: #000; overflow: hidden; }
         .post-img-box img { width: 100%; height: 100%; object-fit: cover; }
         .post-content { padding: 25px; }
 
@@ -61,8 +59,9 @@
         /* --- ADMIN --- */
         .admin-box { background: var(--card-dark); padding: 40px; border-radius: 15px; grid-column: span 2; }
         input, textarea { width: 100%; padding: 15px; background: #222; border: 1px solid #333; color: #fff; border-radius: 8px; margin-bottom: 15px; }
-        .btn { padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn { padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-blue { background: var(--primary-blue); color: #fff; width: 100%; }
+        .btn-blue:hover { opacity: 0.8; }
 
         .hidden { display: none !important; }
         #toast { position: fixed; bottom: 30px; right: 30px; padding: 15px 30px; background: var(--primary-blue); border-radius: 10px; display: none; z-index: 10000; font-weight: bold; }
@@ -70,18 +69,18 @@
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><p>Wysyłanie danych do chmury Firebase...</p></div>
-<div id="toast">Sukces! Dane zapisane.</div>
+<div id="loader"><div class="spinner"></div><p>Przesyłanie danych do bazy v42 (Spark Free)...</p></div>
+<div id="toast">Zapisano pomyślnie!</div>
 
 <header>
     <div class="header-top">
         <div class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></div>
-        <button class="btn" style="background:var(--primary-blue); color:white" onclick="checkAuth()">Panel Redakcji</button>
+        <button class="btn" style="background:var(--primary-blue); color:white; padding:10px 20px" onclick="checkAuth()">Panel Redakcji</button>
     </div>
     <nav>
         <div class="nav-container">
             <div class="nav-link" onclick="showView('home')">Wiadomości</div>
-            <div class="nav-link" onclick="showView('links-page')">Eventy & Linki</div>
+            <div class="nav-link" onclick="showView('links-page')">Linki & Usługi</div>
         </div>
     </nav>
 </header>
@@ -91,27 +90,26 @@
     <div id="view-home" style="display:contents">
         <main><div class="news-section" id="news-grid"></div></main>
         <aside>
-            <h3 style="border-bottom: 2px solid var(--primary-blue); padding-bottom:10px; margin-bottom:20px">PRZYDATNE LINKI</h3>
+            <h3 style="border-bottom: 2px solid var(--primary-blue); padding-bottom:10px; margin-bottom:20px">INFORMACJE</h3>
             <div id="sidebar-links"></div>
         </aside>
     </div>
 
     <div id="view-article" class="hidden" style="grid-column: span 2;">
-        <button class="btn" style="background:#333; color:white; margin-bottom:20px" onclick="showView('home')">← Powrót</button>
+        <button class="btn" style="background:#333; color:white; margin-bottom:20px" onclick="showView('home')">← Wróć do listy</button>
         <div class="article-view" id="full-article-content"></div>
     </div>
 
     <div id="view-links-page" class="hidden" style="grid-column: span 2;">
-        <h2>Wszystkie odnośniki</h2>
+        <h2>Katalog Odnośników</h2>
         <div id="full-links-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top:30px"></div>
     </div>
 
     <div id="view-login" class="hidden" style="grid-column: span 2;">
         <div style="max-width: 400px; margin: 100px auto; background: var(--card-dark); padding: 50px; border-radius: 20px; text-align: center;">
-            <i class="fas fa-lock fa-3x" style="color:var(--primary-blue); margin-bottom:20px"></i>
-            <h2>Autoryzacja</h2>
-            <input type="password" id="admin-pass" style="margin-top:20px; text-align:center" placeholder="Hasło...">
-            <button class="btn btn-blue" onclick="doLogin()">Zaloguj</button>
+            <h2>Logowanie Admina</h2>
+            <input type="password" id="admin-pass" style="margin-top:20px; text-align:center" placeholder="Hasło: diax67">
+            <button class="btn btn-blue" onclick="doLogin()">Weryfikuj</button>
         </div>
     </div>
 
@@ -119,53 +117,51 @@
         <div class="admin-box">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px">
                 <h2 id="admin-form-title">Dodaj Nowy Artykuł</h2>
-                <button class="btn" style="background:var(--danger); color:white" onclick="logout()">Wyloguj</button>
+                <button class="btn" style="background:var(--danger); color:white; padding:10px" onclick="logout()">Wyloguj</button>
             </div>
 
             <input type="hidden" id="edit-id">
-            <input type="text" id="post-title" placeholder="Tytuł artykułu">
-            <input type="text" id="post-author" placeholder="Autor">
-            <textarea id="post-content" rows="10" placeholder="Pełna treść..."></textarea>
-            <label>Zdjęcia (dowolna ilość, Firebase Storage):</label>
+            <input type="text" id="post-title" placeholder="Tytuł posta">
+            <input type="text" id="post-author" placeholder="Twoje imię/pseudonim">
+            <textarea id="post-content" rows="10" placeholder="Cała treść artykułu..."></textarea>
+            <label>Zdjęcia (duże pliki OK - bez opłat):</label>
             <input type="file" id="post-imgs" multiple accept="image/*" style="margin-top:10px">
             
-            <button class="btn btn-blue" onclick="savePost()">OPUBLIKUJ W CHMURZE</button>
+            <button class="btn btn-blue" onclick="savePost()">OPUBLIKUJ ARTYKUŁ</button>
 
-            <hr style="margin: 50px 0; border-color: #333;">
+            <hr style="margin: 40px 0; border-color: #333;">
             
-            <h3>Zarządzaj Linkami</h3>
+            <h3>Linki boczne</h3>
             <div style="display:flex; gap:10px; margin-top:20px">
-                <input type="text" id="link-name" placeholder="Nazwa">
-                <input type="text" id="link-url" placeholder="URL">
-                <button class="btn btn-blue" onclick="saveLink()" style="width:200px">DODAJ</button>
+                <input type="text" id="link-name" placeholder="Nazwa linku">
+                <input type="text" id="link-url" placeholder="https://...">
+                <button class="btn btn-blue" onclick="saveLink()" style="width:200px">DODAJ LINK</button>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:40px; margin-top:40px">
-                <div><h4>Lista Postów</h4><div id="admin-posts-list"></div></div>
-                <div><h4>Lista Linków</h4><div id="admin-links-list"></div></div>
+                <div><h4>Posty (Edycja/Usuwanie)</h4><div id="admin-posts-list"></div></div>
+                <div><h4>Linki</h4><div id="admin-links-list"></div></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- KONFIGURACJA FIREBASE (Wklej tutaj swoje dane z konsoli Firebase) ---
+    // --- KONFIGURACJA FIREBASE ---
     const firebaseConfig = {
         apiKey: "TWOJE_API_KEY",
         authDomain: "mzk-by-facio.firebaseapp.com",
         databaseURL: "https://mzk-by-facio-default-rtdb.firebaseio.com",
         projectId: "mzk-by-facio",
         storageBucket: "mzk-by-facio.appspot.com",
-        messagingSenderId: "SENDER_ID",
         appId: "APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
-    const rootPath = "v42"; // Ścieżka, o którą prosiłeś
+    const rootPath = "v42";
 
-    // --- LOGIKA WIDOKÓW ---
+    // --- SYSTEM WIDOKÓW ---
     function showView(v) {
         document.querySelectorAll('.container > div').forEach(el => el.classList.add('hidden'));
         document.getElementById('view-'+v).classList.remove('hidden');
@@ -177,11 +173,11 @@
         if(document.getElementById('admin-pass').value === 'diax67') {
             sessionStorage.setItem('logged', 'true');
             showView('admin');
-        } else alert('Hasło niepoprawne!');
+        } else alert('Hasło nieprawidłowe!');
     }
     function logout() { sessionStorage.clear(); location.reload(); }
 
-    // --- OBSŁUGA POSTÓW (FIREBASE) ---
+    // --- LOGIKA POSTÓW (DARMOWA) ---
     async function savePost() {
         const id = document.getElementById('edit-id').value;
         const title = document.getElementById('post-title').value;
@@ -189,42 +185,47 @@
         const content = document.getElementById('post-content').value;
         const files = document.getElementById('post-imgs').files;
 
-        if(!title || !content) return alert("Wypełnij dane!");
+        if(!title || !content) return alert("Podaj chociaż tytuł i treść!");
         document.getElementById('loader').style.display = 'flex';
 
-        let imageUrls = [];
-        // Jeśli są nowe pliki, wrzuć je do Storage
+        let images = [];
         if(files.length > 0) {
-            for(let i=0; i < files.length; i++) {
-                const file = files[i];
-                const ref = storage.ref(`${rootPath}/images/${Date.now()}_${file.name}`);
-                await ref.put(file);
-                const url = await ref.getDownloadURL();
-                imageUrls.push(url);
+            for(let f of files) {
+                const b64 = await toBase64(f);
+                images.push(b64);
             }
         } else if(id) {
-            // Przy edycji bez nowych zdjęć zachowaj stare (logika uproszczona)
+            const oldSnap = await db.ref(`${rootPath}/posts/${id}`).once('value');
+            images = oldSnap.val().images || [];
         }
 
         const postData = {
-            title, author, content,
-            images: imageUrls,
+            title, author, content, images,
             date: new Date().toLocaleString('pl-PL'),
             timestamp: Date.now()
         };
 
         if(id) {
-            await db.ref(`${rootPath}/posts/${id}`).update(postData);
+            await db.ref(`${rootPath}/posts/${id}`).set(postData);
         } else {
             await db.ref(`${rootPath}/posts`).push(postData);
         }
 
         document.getElementById('loader').style.display = 'none';
         showToast();
-        location.reload(); // Najbezpieczniejszy refresh przy Firebase
+        resetPostForm();
+        showView('home');
     }
 
-    // --- RENDEROWANIE (REAL-TIME) ---
+    // Konwerter Base64
+    const toBase64 = file => new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => res(reader.result);
+        reader.onerror = e => rej(e);
+    });
+
+    // Renderowanie w czasie rzeczywistym
     db.ref(`${rootPath}/posts`).on('value', (snapshot) => {
         const posts = [];
         snapshot.forEach(child => { posts.push({id: child.key, ...child.val()}); });
@@ -235,33 +236,36 @@
         grid.innerHTML = ""; adminList.innerHTML = "";
 
         posts.forEach((p, idx) => {
-            const snippet = p.content.substring(0, 150) + "...";
-            const img = p.images && p.images[0] ? p.images[0] : 'https://via.placeholder.com/600x400?text=Brak+Zdjecia';
+            const snip = p.content.substring(0, 140) + "...";
+            const mainImg = p.images && p.images[0] ? p.images[0] : '';
             
             if(idx === 0) {
                 grid.innerHTML += `
                     <div class="featured-post" onclick="openArticle('${p.id}')">
-                        <img src="${img}">
+                        <img src="${mainImg}">
                         <div class="featured-overlay">
-                            <h2 style="font-size:36px">${p.title}</h2>
-                            <p style="color:var(--accent-yellow)">Czytaj więcej...</p>
+                            <h2>${p.title}</h2>
+                            <p style="color:var(--accent-yellow)">Kliknij, aby przeczytać całość</p>
                         </div>
                     </div>`;
             } else {
                 grid.innerHTML += `
                     <div class="standard-post" onclick="openArticle('${p.id}')">
-                        <div class="post-img-box"><img src="${img}"></div>
+                        <div class="post-img-box"><img src="${mainImg}"></div>
                         <div class="post-content">
-                            <h3>${p.title}</h3>
-                            <p style="font-size:14px; color:#888; margin:10px 0">${snippet}</p>
+                            <h3 style="font-size:18px">${p.title}</h3>
+                            <p style="font-size:13px; color:#aaa; margin:8px 0">${snip}</p>
                             <small>${p.date}</small>
                         </div>
                     </div>`;
             }
             adminList.innerHTML += `
-                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333">
-                    <span style="font-size:12px">${p.title}</span>
-                    <button class="btn" style="padding:5px; background:var(--danger); color:white" onclick="deletePost('${p.id}')">Usuń</button>
+                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #333; align-items:center">
+                    <span style="font-size:11px">${p.title}</span>
+                    <div style="display:flex; gap:5px">
+                        <button onclick="editPost('${p.id}')" style="background:var(--primary-blue); color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer">Edytuj</button>
+                        <button onclick="deletePost('${p.id}')" style="background:var(--danger); color:white; border:none; padding:3px 8px; border-radius:4px; cursor:pointer">Usuń</button>
+                    </div>
                 </div>`;
         });
     });
@@ -270,22 +274,36 @@
         const snap = await db.ref(`${rootPath}/posts/${id}`).once('value');
         const post = snap.val();
         const area = document.getElementById('full-article-content');
-        let gal = (post.images || []).map(img => `<img src="${img}">`).join('');
+        let gal = (post.images || []).map(img => `<img src="${img}" style="margin-bottom:20px">`).join('');
         
         area.innerHTML = `
-            <h1 style="font-size:48px; line-height:1.1">${post.title}</h1>
-            <p style="margin:20px 0; color:var(--accent-yellow)">Autor: ${post.author} | ${post.date}</p>
+            <h1 style="font-size:40px">${post.title}</h1>
+            <p style="margin:15px 0; color:var(--accent-yellow)">Redakcja: ${post.author} | ${post.date}</p>
             <div class="article-body">${post.content}</div>
             <div class="article-gallery">${gal}</div>
         `;
         showView('article');
     }
 
-    // --- LINKI (REAL-TIME) ---
+    function editPost(id) {
+        db.ref(`${rootPath}/posts/${id}`).once('value').then(s => {
+            const p = s.val();
+            document.getElementById('edit-id').value = id;
+            document.getElementById('post-title').value = p.title;
+            document.getElementById('post-author').value = p.author;
+            document.getElementById('post-content').value = p.content;
+            document.getElementById('admin-form-title').innerText = "Edytuj Artykuł";
+            showView('admin');
+        });
+    }
+
+    function deletePost(id) { if(confirm("Na pewno usunąć?")) db.ref(`${rootPath}/posts/${id}`).remove(); }
+
+    // --- LINKI ---
     function saveLink() {
-        const name = document.getElementById('link-name').value;
-        const url = document.getElementById('link-url').value;
-        if(name && url) db.ref(`${rootPath}/links`).push({ name, url });
+        const n = document.getElementById('link-name').value;
+        const u = document.getElementById('link-url').value;
+        if(n && u) db.ref(`${rootPath}/links`).push({ name: n, url: u });
     }
 
     db.ref(`${rootPath}/links`).on('value', (snap) => {
@@ -293,21 +311,23 @@
         const full = document.getElementById('full-links-list');
         const admin = document.getElementById('admin-links-list');
         side.innerHTML = ""; full.innerHTML = ""; admin.innerHTML = "";
-        
         snap.forEach(child => {
             const l = child.val();
             const html = `<a href="${l.url}" target="_blank" style="display:flex; align-items:center; gap:10px; background:#1a1a1a; padding:15px; border-radius:8px; margin-bottom:10px; text-decoration:none; color:white"><i class="fas fa-link" style="color:var(--primary-blue)"></i>${l.name}</a>`;
             side.innerHTML += html;
             full.innerHTML += html;
-            admin.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px"><span>${l.name}</span><button onclick="deleteLink('${child.key}')">X</button></div>`;
+            admin.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:8px"><span>${l.name}</span><button onclick="db.ref('${rootPath}/links/${child.key}').remove()">Usuń</button></div>`;
         });
     });
 
-    // --- USUWANIE ---
-    function deletePost(id) { if(confirm("Usunąć post?")) db.ref(`${rootPath}/posts/${id}`).remove(); }
-    function deleteLink(id) { db.ref(`${rootPath}/links/${id}`).remove(); }
-
     function showToast() { const t = document.getElementById('toast'); t.style.display='block'; setTimeout(()=>t.style.display='none', 3000); }
+    function resetPostForm() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('post-title').value = "";
+        document.getElementById('post-author').value = "";
+        document.getElementById('post-content').value = "";
+        document.getElementById('admin-form-title').innerText = "Dodaj Nowy Artykuł";
+    }
 </script>
 
 </body>
