@@ -28,9 +28,11 @@
 
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
         
-        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; }
+        /* STYLE FORMATOWANIA DISCORD */
+        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
-        .md-small { font-size: 0.8rem; opacity: 0.8; display: inline-block; }
+        .md-small { font-size: 0.85rem; opacity: 0.7; display: block; line-height: 1.4; color: #94a3b8; }
+        .md-u { text-decoration: underline; text-underline-offset: 3px; }
 
         .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
         .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
@@ -115,7 +117,7 @@
                     </div>
                 </div>
 
-                <textarea id="in-content" rows="10" placeholder="Treść artykułu... (# Nagłówek, **Pogrubienie**, *Kursywa*, -# Mały tekst)" class="input-dark"></textarea>
+                <textarea id="in-content" rows="10" placeholder="Treść artykułu... (# Nagłówek, **Pogrubienie**, *Kursywa*, -# Mały tekst, __Podkreślenie__)" class="input-dark"></textarea>
                 
                 <div class="bg-white/5 p-4 rounded-xl border border-dashed border-white/10">
                     <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Zdjęcia w tym wpisie:</p>
@@ -158,22 +160,30 @@
             parseMarkdown: (text) => {
                 if(!text) return "";
                 let html = text;
+                
+                // 1. Nagłówki (musi być na początku linii)
                 html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>');
                 html = html.replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>');
+                
+                // 2. Mały tekst -#
                 html = html.replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>');
+                
+                // 3. Pogrubienie **tekst**
                 html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // 4. Podkreślenie __tekst__
+                html = html.replace(/__(.*?)__/g, '<span class="md-u">$1</span>');
+                
+                // 5. Kursywa *tekst*
                 html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
                 return html;
             },
 
             previewNewFiles: () => {
                 const files = document.getElementById('in-files').files;
                 const label = document.getElementById('new-files-names');
-                if(files.length > 0) {
-                    label.innerText = `Wybrano nowe pliki do dodania: ${files.length}`;
-                } else {
-                    label.innerText = "";
-                }
+                label.innerText = files.length > 0 ? `Wybrano nowe pliki: ${files.length}` : "";
             },
 
             switchTab: (tabId, btn) => {
@@ -193,7 +203,7 @@
             },
 
             openAdmin: () => {
-                const pin = prompt("KOD REDAKCYJNY:");
+                const pin = prompt("KOD:");
                 if(pin === "diax67") {
                     document.getElementById('view-home').classList.add('hidden');
                     document.getElementById('search-area').classList.add('hidden');
@@ -212,10 +222,7 @@
                 currentEditImages.forEach((url, index) => {
                     const div = document.createElement('div');
                     div.className = "relative inline-block";
-                    div.innerHTML = `
-                        <img src="${url}" class="w-16 h-16 object-cover rounded-lg ring-1 ring-white/10">
-                        <button onclick="core.removeImageFromEdit(${index})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center font-bold shadow-xl border border-white/20">X</button>
-                    `;
+                    div.innerHTML = `<img src="${url}" class="w-16 h-16 object-cover rounded-lg ring-1 ring-white/10"><button onclick="core.removeImageFromEdit(${index})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center font-bold">X</button>`;
                     container.appendChild(div);
                 });
             },
@@ -228,7 +235,7 @@
                 const customDate = document.getElementById('in-date').value;
                 const files = document.getElementById('in-files').files;
 
-                if(!t || !c) return alert("Uzupełnij tytuł i treść!");
+                if(!t || !c) return alert("Uzupełnij pola!");
                 document.getElementById('loader').style.display = 'flex';
 
                 let newImageUrls = [];
@@ -239,27 +246,21 @@
                         try {
                             const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                             const d = await r.json();
-                            if(d && d.success) newImageUrls.push(d.data.url);
-                        } catch(e) { console.error(e); }
+                            if(d.success) newImageUrls.push(d.data.url);
+                        } catch(e) {}
                     }
                 }
 
                 const finalImages = [...currentEditImages, ...newImageUrls];
                 const nowStr = new Date().toLocaleString('pl-PL');
 
-                let postData = {
-                    title: t, 
-                    content: c, 
-                    author: a,
-                    category: cat,
-                    images: finalImages
-                };
+                let postData = { title: t, content: c, author: a, category: cat, images: finalImages };
 
                 if(editId) {
                     const old = allData.find(x => x.id === editId);
-                    postData.date = customDate || old.date; 
+                    postData.date = customDate || old.date;
                     postData.ts = old.ts;
-                    postData.updated = nowStr; 
+                    postData.updated = nowStr;
                 } else {
                     postData.date = customDate || nowStr;
                     postData.ts = Date.now();
@@ -277,24 +278,21 @@
                 if(!post) return;
                 editId = id;
                 currentEditImages = post.images ? [...post.images] : [];
-                
                 document.getElementById('in-title').value = post.title;
                 document.getElementById('in-author').value = post.author;
                 document.getElementById('in-content').value = post.content;
                 document.getElementById('in-category').value = post.category || "Wydarzenia";
                 document.getElementById('in-date').value = post.date || "";
-                document.getElementById('admin-mode-title').innerText = "Edytuj Artykuł";
-                document.getElementById('publish-btn').innerText = "Zapisz Zmiany";
+                document.getElementById('admin-mode-title').innerText = "Edytuj";
+                document.getElementById('publish-btn').innerText = "Zapisz";
                 document.getElementById('publish-btn').classList.replace('bg-blue-600', 'bg-amber-600');
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
-                
                 core.renderEditImages();
                 window.scrollTo(0,0);
             },
 
             cancelEdit: () => {
-                editId = null;
-                currentEditImages = [];
+                editId = null; currentEditImages = [];
                 document.getElementById('in-title').value = "";
                 document.getElementById('in-author').value = "";
                 document.getElementById('in-content').value = "";
@@ -303,120 +301,60 @@
                 document.getElementById('new-files-names').innerText = "";
                 document.getElementById('edit-images-preview').innerHTML = "";
                 document.getElementById('admin-mode-title').innerText = "Nowy Wpis";
-                document.getElementById('publish-btn').innerText = "Opublikuj na stronie";
+                document.getElementById('publish-btn').innerText = "Opublikuj";
                 document.getElementById('publish-btn').classList.replace('bg-amber-600', 'bg-blue-600');
                 document.getElementById('cancel-edit-btn').classList.add('hidden');
             },
 
-            deletePost: (id) => confirm("Usunąć ten wpis?") && postsRef.child(id).remove(),
+            deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove(),
 
-            showAllPosts: () => {
-                showLimit = 999;
-                core.renderPosts(allData);
-                document.getElementById('more-container').classList.add('hidden');
-            },
+            showAllPosts: () => { showLimit = 999; core.renderPosts(allData); document.getElementById('more-container').classList.add('hidden'); },
 
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
-                let filtered = allData;
-                if(currentTab !== 'all') filtered = filtered.filter(p => p.category === currentTab);
-                filtered = filtered.filter(p => p.title.toLowerCase().includes(term) || p.author.toLowerCase().includes(term));
-                core.renderPosts(filtered, term !== "" || currentTab !== 'all');
+                let f = allData;
+                if(currentTab !== 'all') f = f.filter(p => p.category === currentTab);
+                f = f.filter(p => p.title.toLowerCase().includes(term) || p.author.toLowerCase().includes(term));
+                core.renderPosts(f, term !== "" || currentTab !== 'all');
             },
 
             renderPosts: (items, isSearching = false) => {
                 const container = document.getElementById('news-container');
                 container.innerHTML = "";
                 const toShow = isSearching ? items : items.slice(0, showLimit);
-
-                if(toShow.length === 0) {
-                    container.innerHTML = "<div class='text-center py-20 text-slate-500 uppercase text-xs tracking-widest'>Brak wpisów</div>";
-                    return;
-                }
+                if(toShow.length === 0) { container.innerHTML = "<div class='text-center py-20 opacity-50'>Brak wpisów</div>"; return; }
 
                 toShow.forEach(v => {
                     const card = document.createElement('div');
                     card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    let dateDisplay = `<span class="text-[10px] text-slate-500 font-bold tracking-tight">${v.date}</span>`;
-                    const plainPreview = v.content.replace(/[#*]/g, '');
-
-                    card.innerHTML = `
-                        <div class="flex gap-5 flex-col md:flex-row items-center md:items-start">
-                            ${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl shadow-lg border border-white/5">` : `<div class="w-28 h-28 bg-slate-800 rounded-xl flex items-center justify-center text-slate-600"><i class="fa-solid fa-image text-3xl"></i></div>`}
-                            <div class="flex-1 text-center md:text-left">
-                                <div class="flex items-center gap-2 mb-1 justify-center md:justify-start">
-                                    <span class="category-tag">${v.category || 'Wydarzenia'}</span>
-                                    <h2 class="font-black text-xl tracking-tighter">${v.title}</h2>
-                                </div>
-                                <p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">${plainPreview}</p>
-                                <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-4">
-                                    <span class="author-badge">${v.author}</span>
-                                    ${dateDisplay}
-                                </div>
-                            </div>
-                        </div>`;
+                    const plain = v.content.replace(/[#*_-]/g, '').slice(0, 100) + '...';
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row items-center md:items-start">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : `<div class="w-28 h-28 bg-slate-800 rounded-xl flex items-center justify-center"><i class="fa-solid fa-image text-3xl opacity-20"></i></div>`}<div class="flex-1 text-center md:text-left"><div class="flex items-center gap-2 mb-1 justify-center md:justify-start"><span class="category-tag">${v.category || 'Wydarzenia'}</span><h2 class="font-black text-xl">${v.title}</h2></div><p class="opacity-50 text-sm line-clamp-2">${plain}</p><div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-4"><span class="author-badge">${v.author}</span><span class="text-[10px] opacity-40 font-bold">${v.date}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v);
                     container.appendChild(card);
                 });
-
-                const moreBtn = document.getElementById('more-container');
-                moreBtn.classList.toggle('hidden', isSearching || items.length <= showLimit);
+                document.getElementById('more-container').classList.toggle('hidden', isSearching || items.length <= showLimit);
             },
 
-            toggleUpdateDate: () => {
-                const upd = document.getElementById('update-date-info');
-                if(upd) upd.classList.toggle('hidden');
-            },
+            toggleUpdateDate: () => document.getElementById('upd-info')?.classList.toggle('hidden'),
 
             showFull: (data) => {
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
-                
-                let imgs = (data.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl mb-6 shadow-2xl border border-white/5">`).join('');
-                
-                let dateHtml = `
-                    <div>
-                        <p onclick="core.toggleUpdateDate()" class="text-xs font-bold text-slate-500 cursor-pointer hover:text-slate-300 transition">${data.date}</p>
-                        ${data.updated ? `<p id="update-date-info" class="hidden text-[10px] text-amber-500 font-black uppercase mt-1 italic opacity-80">Ostatnia edycja: ${data.updated}</p>` : ''}
-                    </div>
-                `;
-
-                const formattedBody = core.parseMarkdown(data.content);
-
-                document.getElementById('article-content').innerHTML = `
-                    <div class="mb-4"><span class="category-tag !text-[11px] !py-1 !px-3">${data.category || 'Wydarzenia'}</span></div>
-                    <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter leading-tight">${data.title}</h1>
-                    <div class="flex items-center gap-4 mb-8">
-                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">${data.author.charAt(0)}</div>
-                        <div>
-                            <p class="text-sm font-bold text-blue-500 tracking-tighter">${data.author}</p>
-                            ${dateHtml}
-                        </div>
-                    </div>
-                    <div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${formattedBody}</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${imgs}</div>
-                `;
+                let imgs = (data.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl mb-6 shadow-2xl">`).join('');
+                document.getElementById('article-content').innerHTML = `<div class="mb-4"><span class="category-tag">${data.category || 'Wydarzenia'}</span></div><h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter">${data.title}</h1><div class="flex items-center gap-4 mb-8"><div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold">${data.author.charAt(0)}</div><div><p class="text-sm font-bold text-blue-500">${data.author}</p><p onclick="core.toggleUpdateDate()" class="text-xs opacity-40 cursor-pointer">${data.date}</p>${data.updated ? `<p id="upd-info" class="hidden text-[10px] text-amber-500 font-bold uppercase mt-1 italic">Edytowano: ${data.updated}</p>` : ''}</div></div><div class="text-slate-300 text-lg leading-relaxed white-pre mb-10 border-l-4 border-blue-600 pl-6">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${imgs}</div>`;
                 window.scrollTo(0,0);
             }
         };
 
         postsRef.on('value', (snap) => {
-            const data = snap.val();
-            allData = [];
+            const data = snap.val(); allData = [];
             const admList = document.getElementById('admin-list');
-            admList.innerHTML = "<h3 class='text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4'>Zarządzaj wpisami:</h3>";
+            admList.innerHTML = "<h3 class='text-[10px] font-black opacity-30 uppercase tracking-widest mb-4'>Lista:</h3>";
             if(data) {
                 Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                     allData.push({ id, ...v });
-                    admList.innerHTML += `
-                        <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                            <span class="text-[10px] font-bold truncate max-w-[150px] opacity-70 italic">${v.title}</span>
-                            <div class="flex gap-2">
-                                <button onclick="core.editMode('${id}')" class="text-amber-500 px-3 py-1 rounded-full text-[9px] font-bold uppercase border border-amber-500/30">Edytuj</button>
-                                <button onclick="core.deletePost('${id}')" class="text-red-500 px-3 py-1 rounded-full text-[9px] font-bold uppercase border border-red-500/30">Usuń</button>
-                            </div>
-                        </div>`;
+                    admList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl mb-2"><span class="text-[10px] font-bold opacity-50 truncate max-w-[150px] italic">${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 border border-amber-500/20 px-3 py-1 rounded-full text-[9px] font-bold uppercase">Edytuj</button><button onclick="core.deletePost('${id}')" class="text-red-500 border border-red-500/20 px-3 py-1 rounded-full text-[9px] font-bold uppercase">Usuń</button></div></div>`;
                 });
             }
             core.filterPosts();
