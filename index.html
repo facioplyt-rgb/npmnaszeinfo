@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Informacje</title>
+    <title>Ełk Nasze Eventy</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -65,16 +65,17 @@
         .notif-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50px; margin-left: 5px; font-weight: 900; }
         .notif-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
         .report-highlight { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
+
+        /* NOWE STYLE DLA PODGLĄDU */
+        .preview-wrapper { position: relative; width: 60px; height: 60px; }
+        .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
     </style>
 </head>
 <body id="main-body">
 
     <div id="loader">
         <div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div>
-    </div>
-
-    <div id="lightbox" onclick="core.closeLightbox()" class="hidden fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4 cursor-pointer transition-opacity duration-300 opacity-0">
-        <img id="lightbox-img" src="" class="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl transition-transform duration-300 transform scale-95">
     </div>
 
     <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8">
@@ -130,11 +131,6 @@
                         <i class="fa-solid fa-heart text-xl"></i>
                         <span id="like-count" class="font-black">0</span>
                     </div>
-                    
-                    <div onclick="core.sharePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:bg-white/10 hover:text-white cursor-pointer text-[#64748b]">
-                        <i class="fa-solid fa-share-nodes text-xl"></i>
-                        <span class="font-black text-[10px] uppercase tracking-widest">Udostępnij</span>
-                    </div>
                 </div>
 
                 <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
@@ -173,23 +169,15 @@
                             <option value="Aktualizacje">Aktualizacje</option>
                             <option value="Informacje">Informacje</option>
                         </select>
-                        <input type="text" id="in-date" placeholder="Data publikacji (puste = dziś)" class="input-dark text-xs">
+                        <input type="text" id="in-date" placeholder="Data (puste = dziś)" class="input-dark text-xs">
                     </div>
-                    
-                    <div class="p-4 bg-white/5 rounded-xl border border-white/5 space-y-3">
-                        <label class="text-[10px] font-bold uppercase text-slate-400">Status zakończenia wydarzenia</label>
-                        <select id="in-end-mode" class="input-dark text-xs" onchange="core.toggleEndInput()">
-                            <option value="none">Nie pokazuj statusu</option>
-                            <option value="timed">Trwa do określonej godziny</option>
-                            <option value="unknown">Trwa (nieznana godzina końca)</option>
-                            <option value="ended">Dobiegło końca (ręcznie)</option>
-                        </select>
-                        <input type="datetime-local" id="in-event-end" class="input-dark text-xs hidden">
-                    </div>
-                    
                     <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
-                    <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs">
-                    <div id="edit-images-preview" class="flex flex-wrap gap-2"></div>
+                    
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                        <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3">
+                        <div id="edit-images-preview" class="flex flex-wrap gap-2"></div>
+                    </div>
+
                     <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
                     <div id="admin-list" class="mt-10 space-y-2"></div>
                 </div>
@@ -241,71 +229,12 @@
                 return html;
             },
 
-            previewNewFiles: () => {},
-
-            sharePost: () => {
-                const p = allData.find(x => x.id === currentOpenPostId);
-                if (navigator.share) {
-                    navigator.share({
-                        title: p.title,
-                        text: 'Sprawdź to na Ełk Nasze Eventy!',
-                        url: window.location.href
-                    }).catch(err => console.log('Błąd udostępniania:', err));
-                } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert("Skopiowano link do schowka!");
-                }
-            },
-
-            openLightbox: (src) => {
-                const lb = document.getElementById('lightbox');
-                const img = document.getElementById('lightbox-img');
-                img.src = src;
-                lb.classList.remove('hidden');
-                setTimeout(() => {
-                    lb.classList.remove('opacity-0');
-                    img.classList.replace('scale-95', 'scale-100');
-                }, 10);
-            },
-            closeLightbox: () => {
-                const lb = document.getElementById('lightbox');
-                const img = document.getElementById('lightbox-img');
-                lb.classList.add('opacity-0');
-                img.classList.replace('scale-100', 'scale-95');
-                setTimeout(() => lb.classList.add('hidden'), 300);
-            },
-
-            // ROZBUDOWANE: Nowa logika statusów
-            getEventStatus: (p) => {
-                if(!p.endMode || p.endMode === 'none') return "";
-                
-                if(p.endMode === 'ended') {
-                    return `<span class="category-tag bg-red-600/20 text-red-500 ml-2 border border-red-500/20">Dobiegło końca</span>`;
-                }
-                
-                if(p.endMode === 'unknown') {
-                    return `<span class="category-tag bg-blue-500/20 text-blue-400 ml-2 border border-blue-500/20">W trakcie</span>`;
-                }
-
-                if(p.endMode === 'timed' && p.eventEnd) {
-                    const end = new Date(p.eventEnd).getTime();
-                    const now = new Date().getTime();
-                    const diff = end - now;
-                    if(diff < 0) return `<span class="category-tag bg-red-600/20 text-red-500 ml-2 border border-red-500/20">Dobiegło końca</span>`;
-                    
-                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    let leftStr = days > 0 ? `${days}d` : (hours > 0 ? `${hours}h` : `${mins}min`);
-                    return `<span class="category-tag bg-green-500/10 text-green-400 ml-2 border border-green-500/20">Pozostało: ${leftStr}</span>`;
-                }
-                return "";
-            },
-
-            toggleEndInput: () => {
-                const mode = document.getElementById('in-end-mode').value;
-                document.getElementById('in-event-end').classList.toggle('hidden', mode !== 'timed');
+            // --- NAPRAWIONA FUNKCJA PODGLĄDU ---
+            previewNewFiles: () => {
+                const files = document.getElementById('in-files').files;
+                const container = document.getElementById('edit-images-preview');
+                // Nie czyścimy całości, tylko renderujemy od nowa serwerowe + nowe
+                core.renderEditImages(files);
             },
 
             switchTab: (tabId, btn) => {
@@ -347,14 +276,32 @@
 
             removeImageFromEdit: (index) => {
                 currentEditImages.splice(index, 1);
-                core.renderEditImages();
+                core.renderEditImages(document.getElementById('in-files').files);
             },
 
-            renderEditImages: () => {
+            renderEditImages: (newFiles = []) => {
                 const container = document.getElementById('edit-images-preview');
                 container.innerHTML = "";
+                
+                // Pokaż zdjęcia z serwera
                 currentEditImages.forEach((url, index) => {
-                    container.innerHTML += `<div class="relative inline-block"><img src="${url}" class="w-16 h-16 object-cover rounded-lg"><button onclick="core.removeImageFromEdit(${index})" class="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px]">X</button></div>`;
+                    container.innerHTML += `
+                        <div class="preview-wrapper">
+                            <img src="${url}">
+                            <div class="preview-del" onclick="core.removeImageFromEdit(${index})">x</div>
+                        </div>`;
+                });
+
+                // Pokaż podgląd plików lokalnych
+                Array.from(newFiles).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div');
+                        div.className = "preview-wrapper opacity-50";
+                        div.innerHTML = `<img src="${e.target.result}"><div class="absolute bottom-0 left-0 bg-blue-500 text-[8px] px-1 font-bold">LOKALNE</div>`;
+                        container.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
                 });
             },
 
@@ -364,54 +311,48 @@
                 const cat = document.getElementById('in-category').value;
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const customDate = document.getElementById('in-date').value;
-                
-                // DODANE: Nowe parametry statusu
-                const mode = document.getElementById('in-end-mode').value;
-                const endD = document.getElementById('in-event-end').value;
-                
                 const files = document.getElementById('in-files').files;
-                
                 if(!t || !c) return alert("Błąd pól!");
+                
                 document.getElementById('loader').style.display = 'flex';
                 let newUrls = [];
+                
+                // Upload nowych plików
                 if(files.length > 0) {
                     for(let f of files) {
                         const fd = new FormData(); fd.append("image", f);
-                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                        const d = await r.json(); if(d.success) newUrls.push(d.data.url);
+                        try {
+                            const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                            const d = await r.json(); 
+                            if(d.success) newUrls.push(d.data.url);
+                        } catch(e) {}
                     }
                 }
+
                 const finalImgs = [...currentEditImages, ...newUrls];
                 const now = new Date().toLocaleString('pl-PL');
-                
-                let data = { 
-                    title: t, content: c, author: a, category: cat, images: finalImgs, 
-                    eventEnd: endD, endMode: mode 
-                };
+                let data = { title: t, content: c, author: a, category: cat, images: finalImgs };
                 
                 if(editId) {
                     const old = allData.find(x => x.id === editId);
                     data.date = customDate || old.date; data.ts = old.ts; data.updated = now;
+                    data.likes = old.likes || 0;
                 } else {
                     data.date = customDate || now; data.ts = Date.now(); data.likes = 0;
                 }
+                
                 const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
                 act.then(() => location.reload());
             },
 
             editMode: (id) => {
                 const p = allData.find(x => x.id === id);
-                editId = id; currentEditImages = p.images ? [...p.images] : [];
+                editId = id; 
+                currentEditImages = p.images ? [...p.images] : [];
                 document.getElementById('in-title').value = p.title;
                 document.getElementById('in-author').value = p.author;
                 document.getElementById('in-content').value = p.content;
                 document.getElementById('in-date').value = p.date;
-                
-                // DODANE: Ustawienie statusu w edycji
-                document.getElementById('in-end-mode').value = p.endMode || "none";
-                document.getElementById('in-event-end').value = p.eventEnd || "";
-                core.toggleEndInput();
-                
                 document.getElementById('admin-mode-title').innerText = "Edytuj";
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
                 core.renderEditImages();
@@ -419,10 +360,9 @@
 
             cancelEdit: () => {
                 editId = null; currentEditImages = [];
-                document.getElementById('in-title').value = ""; document.getElementById('in-content').value = "";
-                document.getElementById('in-end-mode').value = "none";
-                document.getElementById('in-event-end').value = "";
-                core.toggleEndInput();
+                document.getElementById('in-title').value = ""; 
+                document.getElementById('in-content').value = "";
+                document.getElementById('edit-images-preview').innerHTML = "";
                 document.getElementById('admin-mode-title').innerText = "Nowy Wpis";
                 document.getElementById('cancel-edit-btn').classList.add('hidden');
             },
@@ -444,7 +384,7 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category || 'Wydarzenia'}</span>${core.getEventStatus(v)}<h2 class="font-black text-xl mt-1">${v.title}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category || 'Wydarzenia'}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v);
                     container.appendChild(card);
                 });
@@ -565,7 +505,7 @@
                 else likeBtn.classList.remove('liked');
 
                 core.loadComments(data.id);
-                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex items-center flex-wrap gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span>${core.getEventStatus(data)}</div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" onclick="core.openLightbox('${i}')" class="w-full rounded-3xl cursor-pointer hover:opacity-80 transition">`).join('')}</div>`;
+                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
                 window.scrollTo(0,0);
             }
         };
