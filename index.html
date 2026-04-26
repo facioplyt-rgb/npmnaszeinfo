@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Eventy | Wszystko o eventach</title>
+    <title>Ełk Nasze Eventy</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -29,10 +28,15 @@
 
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
         
-        /* Style dla Twojego formatowania Discordowego */
         .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; }
         .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
         .md-small { font-size: 0.8rem; opacity: 0.8; display: inline-block; }
+
+        .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
+        .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
+
+        .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
     </style>
 </head>
 <body>
@@ -54,10 +58,17 @@
 
     <main class="max-w-5xl mx-auto px-4">
         
-        <div id="search-area" class="mb-8">
+        <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                 <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wydarzenia..." class="input-dark pl-12">
+            </div>
+
+            <div class="flex flex-wrap gap-2 items-center border-b border-white/5 pb-4">
+                <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
+                <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
+                <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
+                <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
             </div>
         </div>
 
@@ -89,12 +100,22 @@
                 <input type="text" id="in-title" placeholder="Tytuł wydarzenia" class="input-dark">
                 <input type="text" id="in-author" placeholder="Autor / Twoja Nazwa" class="input-dark">
                 
+                <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                    <p class="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-widest">Kategoria posta:</p>
+                    <select id="in-category" class="input-dark bg-slate-900">
+                        <option value="Wydarzenia">Wydarzenia</option>
+                        <option value="Aktualizacje">Aktualizacje</option>
+                        <option value="Informacje">Informacje</option>
+                    </select>
+                </div>
+
                 <textarea id="in-content" rows="10" placeholder="Treść artykułu... (# Nagłówek, **Pogrubienie**, *Kursywa*, -# Mały tekst)" class="input-dark"></textarea>
                 
                 <div class="bg-white/5 p-4 rounded-xl border border-dashed border-white/10">
                     <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Zdjęcia w tym wpisie:</p>
                     <div id="edit-images-preview" class="flex flex-wrap gap-2 mb-3"></div>
-                    <input type="file" id="in-files" multiple accept="image/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20">
+                    <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20">
+                    <div id="new-files-names" class="text-[9px] text-blue-400 mt-2 font-bold uppercase"></div>
                 </div>
 
                 <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase transition active:scale-95 shadow-lg shadow-blue-500/20">
@@ -125,23 +146,35 @@
         let showLimit = 3;
         let editId = null;
         let currentEditImages = [];
+        let currentTab = 'all';
 
         window.core = {
-            // Funkcja parsująca styl Discorda na HTML
             parseMarkdown: (text) => {
                 if(!text) return "";
                 let html = text;
-                // # Pogrubienie i powiększenie mocne
                 html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>');
-                // ### Powiększenie i pogrubienie lekkie
                 html = html.replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>');
-                // -# Pomniejszenie
                 html = html.replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>');
-                // ** Pogrubienie
                 html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                // * Kursywa
                 html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
                 return html;
+            },
+
+            previewNewFiles: () => {
+                const files = document.getElementById('in-files').files;
+                const label = document.getElementById('new-files-names');
+                if(files.length > 0) {
+                    label.innerText = `Wybrano nowe pliki do dodania: ${files.length}`;
+                } else {
+                    label.innerText = "";
+                }
+            },
+
+            switchTab: (tabId, btn) => {
+                currentTab = tabId;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                core.filterPosts();
             },
 
             goHome: () => {
@@ -184,21 +217,27 @@
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
+                const cat = document.getElementById('in-category').value;
                 const a = document.getElementById('in-author').value || "Redakcja";
-                const files = document.getElementById('in-files').files;
+                const fileInput = document.getElementById('in-files');
+                const files = fileInput.files;
 
                 if(!t || !c) return alert("Uzupełnij tytuł i treść!");
                 document.getElementById('loader').style.display = 'flex';
 
                 let newImageUrls = [];
-                for(let f of files) {
-                    const fd = new FormData();
-                    fd.append("image", f);
-                    try {
-                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                        const d = await r.json();
-                        if(d.success) newImageUrls.push(d.data.url);
-                    } catch(e) { console.error("ImgBB Error", e); }
+                if(files && files.length > 0) {
+                    for(let i=0; i<files.length; i++) {
+                        const fd = new FormData();
+                        fd.append("image", files[i]);
+                        try {
+                            const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                            const d = await r.json();
+                            if(d && d.success) {
+                                newImageUrls.push(d.data.url);
+                            }
+                        } catch(e) { console.error("Błąd ImgBB:", e); }
+                    }
                 }
 
                 const finalImages = [...currentEditImages, ...newImageUrls];
@@ -206,8 +245,9 @@
 
                 let postData = {
                     title: t, 
-                    content: c, // Przechowujemy czysty tekst z kodami Discorda
-                    author: a, 
+                    content: c, 
+                    author: a,
+                    category: cat,
                     images: finalImages
                 };
 
@@ -222,8 +262,10 @@
                 }
 
                 const action = editId ? postsRef.child(editId).update(postData) : postsRef.push(postData);
-                action.then(() => location.reload()).catch(err => {
-                    alert("Błąd: " + err.message);
+                action.then(() => {
+                    location.reload();
+                }).catch(err => {
+                    alert("Błąd zapisu: " + err.message);
                     document.getElementById('loader').style.display = 'none';
                 });
             },
@@ -237,12 +279,14 @@
                 document.getElementById('in-title').value = post.title;
                 document.getElementById('in-author').value = post.author;
                 document.getElementById('in-content').value = post.content;
+                document.getElementById('in-category').value = post.category || "Wydarzenia";
                 document.getElementById('admin-mode-title').innerText = "Edytuj Artykuł";
                 document.getElementById('publish-btn').innerText = "Zapisz Zmiany";
                 document.getElementById('publish-btn').classList.replace('bg-blue-600', 'bg-amber-600');
                 document.getElementById('cancel-edit-btn').classList.remove('hidden');
                 
                 core.renderEditImages();
+                core.previewNewFiles();
                 window.scrollTo(0,0);
             },
 
@@ -253,6 +297,7 @@
                 document.getElementById('in-author').value = "";
                 document.getElementById('in-content').value = "";
                 document.getElementById('in-files').value = "";
+                document.getElementById('new-files-names').innerText = "";
                 document.getElementById('edit-images-preview').innerHTML = "";
                 document.getElementById('admin-mode-title').innerText = "Nowy Wpis";
                 document.getElementById('publish-btn').innerText = "Opublikuj na stronie";
@@ -270,11 +315,18 @@
 
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
-                const filtered = allData.filter(p => 
+                let filtered = allData;
+
+                if(currentTab !== 'all') {
+                    filtered = filtered.filter(p => p.category === currentTab);
+                }
+
+                filtered = filtered.filter(p => 
                     p.title.toLowerCase().includes(term) || 
                     p.author.toLowerCase().includes(term)
                 );
-                core.renderPosts(filtered, term !== "");
+
+                core.renderPosts(filtered, term !== "" || currentTab !== 'all');
             },
 
             renderPosts: (items, isSearching = false) => {
@@ -283,7 +335,7 @@
                 const toShow = isSearching ? items : items.slice(0, showLimit);
 
                 if(toShow.length === 0) {
-                    container.innerHTML = "<div class='text-center py-20 text-slate-500 uppercase text-xs tracking-widest'>Nic nie znaleziono</div>";
+                    container.innerHTML = "<div class='text-center py-20 text-slate-500 uppercase text-xs tracking-widest'>Brak wpisów w tej sekcji</div>";
                     return;
                 }
 
@@ -293,14 +345,16 @@
                     let dateInfo = `<span class="text-[10px] text-slate-500 font-bold tracking-tight">${v.date}</span>`;
                     if(v.updated) dateInfo += ` <span class="text-[10px] text-amber-500 font-black ml-1">[AKTUALIZACJA: ${v.updated}]</span>`;
                     
-                    // Podgląd w karcie usuwa kody Markdown dla czystego tekstu
                     const plainPreview = v.content.replace(/[#*]/g, '');
 
                     card.innerHTML = `
                         <div class="flex gap-5 flex-col md:flex-row items-center md:items-start">
                             ${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl shadow-lg border border-white/5">` : `<div class="w-28 h-28 bg-slate-800 rounded-xl flex items-center justify-center text-slate-600"><i class="fa-solid fa-image text-3xl"></i></div>`}
                             <div class="flex-1 text-center md:text-left">
-                                <h2 class="font-black text-xl mb-1 tracking-tighter">${v.title}</h2>
+                                <div class="flex items-center gap-2 mb-1 justify-center md:justify-start">
+                                    <span class="category-tag">${v.category || 'Wydarzenia'}</span>
+                                    <h2 class="font-black text-xl tracking-tighter">${v.title}</h2>
+                                </div>
                                 <p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">${plainPreview}</p>
                                 <div class="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-4">
                                     <span class="author-badge">${v.author}</span>
@@ -325,10 +379,10 @@
                 let fullDate = `<p class="text-[10px] text-slate-500 font-bold">${data.date}</p>`;
                 if(data.updated) fullDate += `<p class="text-[10px] text-amber-500 font-black uppercase mt-1">[Aktualizacja: ${data.updated}]</p>`;
 
-                // Tutaj parsujemy kody Discorda na HTML
                 const formattedBody = core.parseMarkdown(data.content);
 
                 document.getElementById('article-content').innerHTML = `
+                    <div class="mb-4"><span class="category-tag !text-[11px] !py-1 !px-3">${data.category || 'Wydarzenia'}</span></div>
                     <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tighter leading-tight">${data.title}</h1>
                     <div class="flex items-center gap-4 mb-8">
                         <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">${data.author.charAt(0)}</div>
@@ -363,7 +417,7 @@
                         </div>`;
                 });
             }
-            core.renderPosts(allData);
+            core.filterPosts();
         });
     </script>
 </body>
