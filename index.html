@@ -2,468 +2,368 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ełk Nasze Eventy | Wiadomości, Kultura, Sport</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #f59e0b; --bg-main: #0f172a; --glass: rgba(255, 255, 255, 0.95); }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
-        html, body { height: 100%; width: 100%; background-color: var(--bg-main); overflow: hidden; position: fixed; }
-        
-        #map { position: absolute; inset: 0; z-index: 10; background: #e2e8f0; }
+        :root {
+            --main-color: #003366;
+            --accent-color: #ffcc00;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-dark: #2c3e50;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --gradient: linear-gradient(135deg, #003366 0%, #00509e 100%);
+        }
 
-        /* Interfejsy / Arkusze */
-        .overlay-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-        .overlay-screen.hidden-up { transform: translateY(-100%); pointer-events: none; opacity: 0; }
-        
-        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); backdrop-filter: blur(20px); border-radius: 40px 40px 0 0; padding: 40px 30px; transform: translateY(110%); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.15); border-top: 1px solid rgba(255,255,255,0.5); }
-        .sheet.active { transform: translateY(0); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Roboto', sans-serif; background-color: var(--bg); color: var(--text-dark); overflow-x: hidden; }
+        h1, h2, h3, .logo { font-family: 'Montserrat', sans-serif; }
 
-        /* Kontrolki formularzy */
-        .input-pro { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 22px 25px; border-radius: 25px; font-weight: 800; font-size: 1.1rem; outline: none; transition: 0.3s; margin-bottom: 15px; color: #1e293b; }
-        .input-pro:focus { border-color: var(--primary); background: white; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.1); }
+        /* --- NAVIGATION --- */
+        nav {
+            background: var(--gradient);
+            color: white;
+            padding: 0 20px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-weight: 900; font-size: 24px; text-transform: uppercase; letter-spacing: -1px; cursor: pointer; }
+        .logo span { color: var(--accent-color); }
         
-        .btn-pro { width: 100%; border: none; padding: 22px; border-radius: 25px; font-weight: 900; font-size: 1rem; text-transform: uppercase; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.2s; }
-        .btn-pro:active { transform: scale(0.96); }
+        .nav-btns { display: flex; gap: 15px; }
+        .btn-nav {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+        .btn-nav:hover { background: var(--accent-color); color: var(--main-color); }
 
-        /* Znaczniki na mapie */
-        .marker-radar { width: 50px; height: 50px; border: 4px solid white; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.25); transition: 0.3s; }
-        .marker-event { width: 65px; height: 65px; background: white; border: 5px solid #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #8b5cf6; box-shadow: 0 0 25px rgba(139, 92, 246, 0.5); animation: pulseEvent 2s infinite; }
-        
-        @keyframes pulseEvent { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); } 70% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); } }
+        /* --- MAIN LAYOUT --- */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .section-title { font-size: 32px; margin-bottom: 30px; border-left: 8px solid var(--accent-color); padding-left: 15px; }
 
-        /* Toasty (Powiadomienia) */
-        #toast-container { position: fixed; top: 120px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.4s 2.5s forwards; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+        /* --- CARDS / FEED --- */
+        .feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+        .event-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .event-card:hover { transform: translateY(-10px); }
         
-        /* Animowany Hint Dodawania */
-        #tap-hint { position: fixed; top: 130px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 15px 30px; border-radius: 50px; font-weight: 900; z-index: 5000; border: 2px solid #f59e0b; box-shadow: 0 15px 30px rgba(245, 158, 11, 0.3); animation: bounceHint 1s infinite alternate; pointer-events: none; }
-        @keyframes bounceHint { from { transform: translate(-50%, 0); } to { transform: translate(-50%, -10px); } }
+        /* Kolaż zdjęć */
+        .card-gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 220px;
+            gap: 2px;
+            background: #eee;
+        }
+        .card-gallery img { width: 100%; height: 100%; object-fit: cover; }
+        .img-full { grid-column: span 2; }
+
+        .card-body { padding: 25px; flex-grow: 1; }
+        .card-tag { font-size: 12px; font-weight: 900; color: var(--main-color); text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .card-title { font-size: 20px; margin-bottom: 15px; line-height: 1.3; }
+        .card-text { font-size: 15px; color: #666; margin-bottom: 20px; }
+        .card-footer { padding: 15px 25px; border-top: 1px solid #eee; font-size: 13px; color: #999; display: flex; justify-content: space-between; }
+
+        /* --- ADMIN PANEL --- */
+        .admin-section { background: white; padding: 40px; border-radius: 20px; box-shadow: var(--shadow); max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: bold; color: var(--main-color); }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .form-group input:focus { border-color: var(--main-color); }
+
+        /* Uploader zdjęć */
+        .upload-area {
+            border: 3px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #fafafa;
+        }
+        .upload-area:hover { border-color: var(--main-color); background: #f0f7ff; }
+        .preview-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .preview-img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid var(--main-color); }
+
+        .btn-action {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0,51,102,0.3);
+            transition: 0.3s;
+        }
+        .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .admin-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9f9;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+        .btn-del { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+
+        /* --- LOGIN --- */
+        .login-box { max-width: 400px; margin: 100px auto; text-align: center; padding: 40px; background: white; border-radius: 20px; box-shadow: var(--shadow); }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="onboarding-screen" class="overlay-screen">
-        <div class="w-full max-w-md px-8 flex flex-col gap-6">
-            <div class="text-center mb-6">
-                <i class="fa-solid fa-radar text-6xl text-amber-500 mb-4 drop-shadow-xl"></i>
-                <h1 id="welcome-title" class="text-5xl font-black italic text-slate-900 tracking-tight">RADAR</h1>
-                <p class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Miejski System Zgłoszeń</p>
-            </div>
-            
-            <div id="setup-step-nick" class="w-full">
-                <input type="text" id="input-nick" placeholder="Wpisz swój identyfikator" class="input-pro text-center">
-                <button id="btn-next-step" class="btn-pro bg-slate-900 text-white shadow-xl shadow-slate-200">
-                    DALEJ <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </div>
-
-            <div id="setup-step-city" class="w-full hidden">
-                <h2 class="text-2xl font-black italic mb-4 text-slate-800">Gdzie jesteś?</h2>
-                <div id="btn-city-gorzow" class="bg-white p-6 rounded-[30px] border-2 border-slate-100 flex justify-between items-center cursor-pointer hover:border-amber-500 transition-all shadow-sm">
-                    <span class="font-black text-lg italic uppercase text-slate-800">Gorzów Wlkp.</span>
-                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center"><i class="fa-solid fa-location-crosshairs text-xl"></i></div>
-                </div>
-                <button id="btn-back-nick" class="w-full mt-6 text-[10px] font-black text-slate-400 uppercase underline">Zmień identyfikator</button>
+    <nav>
+        <div class="nav-container">
+            <div class="logo" onclick="showView('home')">Ełk <span>Nasze Eventy</span></div>
+            <div class="nav-btns">
+                <button class="btn-nav" onclick="showView('home')">Wiadomości</button>
+                <button class="btn-nav" onclick="checkAccess()">Panel Admina</button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div id="map"></div>
-
-    <div class="fixed top-8 left-4 right-4 z-[1000] flex justify-between items-center bg-white/90 backdrop-blur-xl p-3 pl-4 rounded-[30px] shadow-2xl border border-white/50">
-        <div id="btn-hud-profile" class="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity">
-            <div id="admin-badge" class="hidden absolute -top-1 -left-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] z-10 shadow-lg"><i class="fa-solid fa-shield"></i></div>
-            <div class="w-12 h-12 bg-slate-900 rounded-[20px] flex items-center justify-center text-amber-500 shadow-inner relative"><i class="fa-solid fa-user-astronaut text-xl"></i></div>
-            <div class="flex flex-col">
-                <h2 id="display-city" class="text-sm font-black uppercase italic text-slate-800 leading-tight">Radar</h2>
-                <p id="display-nick" class="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Wczytywanie...</p>
-            </div>
-        </div>
-        <button id="btn-hud-events" class="w-12 h-12 bg-purple-50 text-purple-600 rounded-[20px] border border-purple-100 flex items-center justify-center shadow-sm relative transition-transform active:scale-90">
-            <i class="fa-solid fa-list-ul text-lg"></i>
-            <span id="events-counter" class="absolute -top-1 -right-1 bg-red-500 text-white w-5 h-5 rounded-full text-[9px] font-black flex items-center justify-center hidden">0</span>
-        </button>
-    </div>
-
-    <div class="fixed bottom-10 left-0 right-0 z-[1000] flex justify-center px-6 pointer-events-none">
-        <button id="btn-main-add" class="pointer-events-auto bg-slate-900 text-white w-full max-w-[280px] py-6 rounded-[35px] font-black italic shadow-2xl shadow-slate-900/50 border-b-4 border-amber-500 flex items-center justify-center gap-4 transition-all active:translate-y-1 active:border-b-0 hover:bg-slate-800 text-lg">
-            <i class="fa-solid fa-plus-circle text-amber-500 text-2xl"></i> ZGŁOŚ SYTUACJĘ
-        </button>
-    </div>
-
-    <div id="toast-container"></div>
-
-    <div id="sheet-categories" class="sheet">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="font-black text-xs uppercase text-slate-400 tracking-widest">Co chcesz zgłosić?</h3>
-            <button class="btn-close-sheet text-slate-300 hover:text-slate-500 p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-        <div class="grid grid-cols-2 gap-4" id="category-buttons-container">
-            </div>
-    </div>
-
-    <div id="sheet-details" class="sheet">
-        <div class="flex justify-between items-center mb-6">
-            <h2 id="details-title" class="text-3xl font-black italic text-slate-800">Szczegóły</h2>
-            <button class="btn-close-sheet text-slate-300 hover:text-slate-500 p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-        <input type="text" id="input-line" placeholder="NUMER LINII / NAZWA" class="input-pro text-center text-2xl uppercase" maxlength="15">
-        <textarea id="input-desc" placeholder="OPIS WYDARZENIA (Opcjonalnie, max 100 znaków)" class="input-pro hidden h-32 py-4 text-sm resize-none" maxlength="100"></textarea>
-        <button id="btn-publish" class="btn-pro bg-amber-500 text-white shadow-xl shadow-amber-200 mt-2 text-lg">
-            OPUBLIKUJ <i class="fa-solid fa-paper-plane"></i>
-        </button>
-    </div>
-
-    <div id="sheet-events-list" class="sheet">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-black italic text-purple-900">Wydarzenia</h2>
-            <button class="btn-close-sheet text-purple-300 hover:text-purple-500 p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-        <div id="list-long-events" class="space-y-4 pb-8">
-            <div class="text-center py-10 opacity-50">
-                <i class="fa-solid fa-mug-hot text-4xl mb-3 text-slate-300"></i>
-                <p class="font-black uppercase text-[10px] tracking-widest text-slate-400">Czysta trasa. Brak utrudnień.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="sheet-admin" class="sheet">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-3xl font-black italic text-red-600 uppercase flex items-center gap-3"><i class="fa-solid fa-shield-halved"></i> Admin</h2>
-            <button class="btn-close-sheet text-red-300 hover:text-red-500 p-2"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-        <div class="bg-slate-50 rounded-[30px] p-6 border border-slate-100 mb-6">
-            <h3 class="font-black text-[10px] uppercase text-slate-400 tracking-widest mb-4">Zarządzanie Mapą (Kliknij aby usunąć)</h3>
-            <div id="admin-items-list" class="space-y-2 max-h-[30vh] overflow-y-auto pr-2">
+    <div class="container">
+        
+        <div id="view-home">
+            <h1 class="section-title">Najnowsze Wydarzenia</h1>
+            <div class="feed" id="news-feed">
                 </div>
         </div>
-        <button id="btn-admin-clear" class="btn-pro bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white mt-4">
-            <i class="fa-solid fa-skull text-xl"></i> WYCZYŚĆ CAŁĄ MAPĘ
-        </button>
-    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        // Importy Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        <div id="view-login" class="hidden">
+            <div class="login-box">
+                <i class="fas fa-lock fa-3x" style="color: var(--main-color); margin-bottom: 20px;"></i>
+                <h2>Panel Chroniony</h2>
+                <p style="margin-bottom: 20px; color: #777;">Podaj hasło administratora, aby kontynuować.</p>
+                <input type="password" id="admin-pass" class="form-group" style="text-align:center" placeholder="Hasło: elk2026">
+                <button class="btn-action" onclick="login()">Zaloguj się</button>
+            </div>
+        </div>
 
-        // Konfiguracja i Inicjalizacja Firebase
-        const fbConfig = { databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app" };
-        const app = initializeApp(fbConfig);
-        const db = getDatabase(app);
+        <div id="view-admin" class="hidden">
+            <div class="admin-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px">
+                    <h2>Dodaj Nowy Artykuł</h2>
+                    <button class="btn-del" onclick="logout()">Wyloguj</button>
+                </div>
 
-        // Stan Aplikacji (Zastępuje zmienne globalne window.*)
-        const State = {
-            nick: localStorage.getItem('radar_nick_v2') || '',
-            city: '',
-            mapPos: null,
-            isAdmin: false,
-            markers: {}, // Słownik przechowujący referencje do obiektów Leaflet
-            pendingCategory: null // Przechowuje wybraną kategorię przed publikacją
-        };
+                <div class="form-group">
+                    <label>Tytuł Eventu</label>
+                    <input type="text" id="post-title" placeholder="Np. Dni Ełku 2026 - Wielki Finał">
+                </div>
 
-        // Kategorie Zgłoszeń
-        const Categories = [
-            { id: 'kontrola', name: 'Kontrola', icon: 'fa-user-secret', color: '#ef4444', type: 'alert', bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-500' },
-            { id: 'wydarzenie', name: 'Wydarzenie', icon: 'fa-road-barrier', color: '#8b5cf6', type: 'event', bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-500' },
-            { id: 'awaria', name: 'Awaria', icon: 'fa-bus-burst', color: '#f59e0b', type: 'alert', bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-500' },
-            { id: 'korek', name: 'Korek', icon: 'fa-hourglass-half', color: '#3b82f6', type: 'alert', bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-500' }
-        ];
+                <div class="form-group">
+                    <label>Treść Artykułu</label>
+                    <textarea id="post-content" rows="6" placeholder="Opisz co, gdzie i kiedy..."></textarea>
+                </div>
 
-        // Inicjalizacja Mapy Leaflet
-        const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([52.73, 15.23], 13);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-        
-        // --- SYSTEM TOASTÓW (Powiadomienia) ---
-        function showToast(message, icon = 'fa-circle-info', color = '#f59e0b') {
-            const container = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.innerHTML = `<i class="fa-solid ${icon}" style="color: ${color}"></i> <span>${message}</span>`;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
-        }
-
-        // --- OBSŁUGA INTERFEJSU (DOM Elements) ---
-        // Pamiętaj: Zapinamy listener'y tutaj, żeby HTML był czysty i nie blokował się z Firebase.
-        
-        // Zamykanie arkuszy
-        document.querySelectorAll('.btn-close-sheet').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-            });
-        });
-
-        // KROK 1: Start i Nick
-        if (State.nick) {
-            document.getElementById('welcome-title').innerText = "Witaj ponownie";
-            document.getElementById('input-nick').value = State.nick;
-        }
-
-        document.getElementById('btn-next-step').addEventListener('click', () => {
-            const n = document.getElementById('input-nick').value.trim();
-            if(!n || n.length < 2) return showToast("Podaj poprawny nick!", "fa-triangle-exclamation", "#ef4444");
-            
-            State.nick = n;
-            localStorage.setItem('radar_nick_v2', n);
-            
-            document.getElementById('setup-step-nick').classList.add('hidden');
-            document.getElementById('setup-step-city').classList.remove('hidden');
-        });
-
-        document.getElementById('btn-back-nick').addEventListener('click', () => {
-            document.getElementById('setup-step-city').classList.add('hidden');
-            document.getElementById('setup-step-nick').classList.remove('hidden');
-        });
-
-        // KROK 2: Wybór Miasta i Załadowanie Mapy
-        document.getElementById('btn-city-gorzow').addEventListener('click', () => {
-            State.city = 'gorzow';
-            document.getElementById('onboarding-screen').classList.add('hidden-up');
-            
-            // Aktualizacja HUD
-            document.getElementById('display-city').innerText = "Gorzów Wlkp.";
-            document.getElementById('display-nick').innerText = State.nick;
-            showToast("Połączono z miastem", "fa-satellite-dish", "#10b981");
-
-            startRealtimeListener();
-        });
-
-        // --- NASŁUCHIWANIE BAZY DANYCH (REAL-TIME) ---
-        function startRealtimeListener() {
-            const alertsRef = ref(db, `radar_live/${State.city}/alerts`);
-            
-            onValue(alertsRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                const domEventsList = document.getElementById('list-long-events');
-                const domAdminList = document.getElementById('admin-items-list');
-                
-                domEventsList.innerHTML = "";
-                domAdminList.innerHTML = "";
-                
-                // Czyszczenie starej warstwy markerów
-                Object.values(State.markers).forEach(m => map.removeLayer(m));
-                State.markers = {};
-                
-                let eventCount = 0;
-
-                const entries = Object.entries(data);
-                if(entries.length === 0) {
-                    domEventsList.innerHTML = `<div class="text-center py-10 opacity-50"><i class="fa-solid fa-face-smile text-4xl mb-3 text-slate-300"></i><p class="font-black uppercase text-[10px] tracking-widest text-slate-400">Brak zgłoszeń.</p></div>`;
-                    domAdminList.innerHTML = `<p class="text-[10px] font-bold text-slate-400 uppercase text-center p-4">Mapa jest pusta</p>`;
-                }
-
-                entries.forEach(([key, item]) => {
-                    const isEvent = item.type === 'event';
-                    
-                    // 1. Dodawanie na Mapę
-                    const iconHtml = isEvent 
-                        ? `<div class="marker-event"><i class="fa-solid ${item.icon} text-2xl"></i></div>` 
-                        : `<div class="marker-radar" style="background:${item.color}"><i class="fa-solid ${item.icon} text-[22px] mb-0.5"></i><div class="text-[11px] font-black leading-none">${item.line}</div></div>`;
-                    
-                    const marker = L.marker([item.lat, item.lng], { 
-                        icon: L.divIcon({ className: 'custom-icon-wrapper', html: iconHtml, iconAnchor: isEvent ? [32, 32] : [25, 25] }) 
-                    }).addTo(map);
-                    
-                    // Pokazanie popupu przy kliknięciu w marker (bajer profesjonalny)
-                    marker.bindPopup(`<b style="font-family:'Plus Jakarta Sans'">${item.line}</b><br><span style="font-size:10px; color:gray">${new Date(item.time).toLocaleTimeString()} - ${item.author}</span>`);
-                    State.markers[key] = marker;
-
-                    // 2. Budowa Listy Wydarzeń
-                    if(isEvent) {
-                        eventCount++;
-                        const evEl = document.createElement('div');
-                        evEl.className = "bg-purple-50 p-5 rounded-[25px] border border-purple-100 flex flex-col gap-2";
-                        evEl.innerHTML = `
-                            <div class="flex justify-between items-center">
-                                <span class="font-black text-lg text-purple-900"><i class="fa-solid ${item.icon} text-purple-400 mr-2"></i> ${item.line}</span>
-                                <span class="text-[9px] font-black bg-white px-3 py-1.5 rounded-full text-purple-400 shadow-sm">${new Date(item.time).toLocaleTimeString()}</span>
-                            </div>
-                            <p class="text-xs font-medium text-slate-600 bg-white/50 p-3 rounded-xl">${item.desc || 'Brak opisu.'}</p>
-                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Zgłosił: ${item.author}</p>
-                        `;
-                        domEventsList.appendChild(evEl);
-                    }
-
-                    // 3. Budowa Listy Administratora
-                    const admEl = document.createElement('div');
-                    admEl.className = "flex justify-between items-center bg-white p-3 px-4 rounded-2xl border border-slate-100 hover:border-red-300 transition-colors cursor-pointer group";
-                    admEl.innerHTML = `
-                        <div class="flex flex-col">
-                            <span class="text-[11px] font-black text-slate-800 uppercase">${item.line}</span>
-                            <span class="text-[9px] font-bold text-slate-400">${item.author} • ${new Date(item.time).toLocaleTimeString()}</span>
+                <div class="form-group">
+                    <label>Galeria Zdjęć (Wybierz wiele)</label>
+                    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-cloud-upload-alt fa-3x" style="color: var(--main-color); margin-bottom:10px"></i>
+                        <p>Kliknij tutaj, aby dodać zdjęcia z dysku</p>
+                        <input type="file" id="file-input" multiple accept="image/*" class="hidden" onchange="handleFiles(this.files)">
+                    </div>
+                    <div class="preview-container" id="preview-box">
                         </div>
-                        <i class="fa-solid fa-trash-can text-slate-300 group-hover:text-red-500 transition-colors text-lg"></i>
-                    `;
-                    admEl.addEventListener('click', () => deletePoint(key));
-                    domAdminList.appendChild(admEl);
-                });
+                </div>
 
-                // Aktualizacja licznika wydarzeń na przycisku
-                const counter = document.getElementById('events-counter');
-                if(eventCount > 0) {
-                    counter.innerText = eventCount;
-                    counter.classList.remove('hidden');
-                } else {
-                    counter.classList.add('hidden');
-                }
+                <button class="btn-action" onclick="publishPost()">Opublikuj na Stronie</button>
+
+                <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+                
+                <h3>Zarządzaj Postami</h3>
+                <div id="admin-list">
+                    </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // BAZA DANYCH W PAMIĘCI PRZEGLĄDARKI
+        let posts = JSON.parse(localStorage.getItem('elk_pro_data')) || [];
+        let uploadedImages = [];
+
+        // NAWIGACJA
+        function showView(view) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('view-' + view).classList.remove('hidden');
+            if(view === 'home') renderHome();
+            if(view === 'admin') renderAdmin();
+        }
+
+        function checkAccess() {
+            if(sessionStorage.getItem('isLogged') === 'true') showView('admin');
+            else showView('login');
+        }
+
+        function login() {
+            if(document.getElementById('admin-pass').value === 'elk2026') {
+                sessionStorage.setItem('isLogged', 'true');
+                showView('admin');
+            } else alert('Błędne hasło!');
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLogged');
+            showView('home');
+        }
+
+        // OBSŁUGA ZDJĘĆ
+        function handleFiles(files) {
+            uploadedImages = [];
+            document.getElementById('preview-box').innerHTML = '';
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedImages.push(e.target.result);
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-img';
+                    document.getElementById('preview-box').appendChild(img);
+                };
+                reader.readAsDataURL(file);
             });
         }
 
-        // --- SYSTEM DODAWANIA (FLOW) ---
-        
-        // 1. Kliknięcie "DODAJ"
-        document.getElementById('btn-main-add').addEventListener('click', () => {
-            // Zamknij arkusze jeśli otwarte
-            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-            
-            // Stwórz instrukcję na ekranie
-            if(!document.getElementById('tap-hint')) {
-                const hint = document.createElement('div');
-                hint.id = "tap-hint";
-                hint.innerHTML = `<i class="fa-solid fa-hand-pointer text-amber-500 mr-2"></i> WSKAŻ MIEJSCE NA MAPIE`;
-                document.body.appendChild(hint);
+        // DODAWANIE POSTA
+        function publishPost() {
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+
+            if(!title || !content || uploadedImages.length === 0) {
+                alert("Musisz dodać tytuł, treść i przynajmniej jedno zdjęcie!");
+                return;
             }
-        });
 
-        // 2. Kliknięcie na mapę
-        map.on('click', (e) => {
-            const hint = document.getElementById('tap-hint');
-            if(hint) {
-                State.mapPos = e.latlng;
-                hint.remove(); // Usuń instrukcję
-                openCategorySelector(); // Otwórz arkusz kategorii
-            }
-        });
-
-        // 3. Otwarcie wyboru kategorii
-        function openCategorySelector() {
-            const container = document.getElementById('category-buttons-container');
-            container.innerHTML = ""; // Czyść stare przyciski
-            
-            Categories.forEach(cat => {
-                const btn = document.createElement('button');
-                btn.className = `flex flex-col items-center p-6 ${cat.bg} rounded-[30px] ${cat.text} border-2 ${cat.border} transition-transform active:scale-95`;
-                btn.innerHTML = `
-                    <i class="fa-solid ${cat.icon} text-4xl mb-3 drop-shadow-sm"></i>
-                    <span class="text-[10px] font-black uppercase tracking-widest">${cat.name}</span>
-                `;
-                // Genialny sposób podpięcia zdarzenia - żadnych błędów window.function
-                btn.addEventListener('click', () => selectCategory(cat));
-                container.appendChild(btn);
-            });
-
-            document.getElementById('sheet-categories').classList.add('active');
-        }
-
-        // 4. Wybór kategorii i przejście do szczegółów
-        function selectCategory(catObj) {
-            State.pendingCategory = catObj;
-            
-            // Ukryj wybór, pokaż formularz
-            document.getElementById('sheet-categories').classList.remove('active');
-            document.getElementById('sheet-details').classList.add('active');
-            
-            // Dostosuj formularz
-            const descInput = document.getElementById('input-desc');
-            const title = document.getElementById('details-title');
-            
-            if(catObj.type === 'event') {
-                descInput.classList.remove('hidden');
-                title.innerText = "Nowe Wydarzenie";
-                document.getElementById('input-line').placeholder = "TYTUŁ (np. Wypadek)";
-            } else {
-                descInput.classList.add('hidden');
-                descInput.value = ""; // Czyść
-                title.innerText = "Szybki Alert";
-                document.getElementById('input-line').placeholder = "NUMER LINII (np. 104)";
-            }
-        }
-
-        // 5. Ostateczna publikacja do Firebase
-        document.getElementById('btn-publish').addEventListener('click', () => {
-            const lineVal = document.getElementById('input-line').value.trim().toUpperCase();
-            const descVal = document.getElementById('input-desc').value.trim();
-            
-            if(!lineVal) return showToast("Wpisz numer linii lub tytuł!", "fa-circle-xmark", "#ef4444");
-
-            const payload = {
-                line: lineVal,
-                desc: descVal,
-                lat: State.mapPos.lat,
-                lng: State.mapPos.lng,
-                type: State.pendingCategory.type,
-                icon: State.pendingCategory.icon,
-                color: State.pendingCategory.color,
-                author: State.nick,
-                time: Date.now()
+            const newPost = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                images: uploadedImages,
+                date: new Date().toLocaleDateString('pl-PL'),
+                timestamp: new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})
             };
 
-            // PUSH do bazy
-            push(ref(db, `radar_live/${State.city}/alerts`), payload)
-                .then(() => {
-                    showToast("Zgłoszenie dodane!", "fa-check", "#10b981");
-                    document.getElementById('sheet-details').classList.remove('active');
-                    document.getElementById('input-line').value = '';
-                    document.getElementById('input-desc').value = '';
-                })
-                .catch(err => showToast("Błąd połączenia!", "fa-bomb", "#ef4444"));
-        });
+            posts.unshift(newPost);
+            localStorage.setItem('elk_pro_data', JSON.stringify(posts));
+            
+            // RESET FORMULARZA
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-content').value = '';
+            document.getElementById('preview-box').innerHTML = '';
+            uploadedImages = [];
+            
+            alert('Artykuł opublikowany!');
+            renderAdmin();
+        }
 
-        // --- OBSŁUGA WYDARZEŃ I ADMINA ---
-        
-        // Otwieranie listy wydarzeń
-        document.getElementById('btn-hud-events').addEventListener('click', () => {
-            document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-            document.getElementById('sheet-events-list').classList.add('active');
-        });
-
-        // Logowanie i otwieranie panelu Admina
-        document.getElementById('btn-hud-profile').addEventListener('click', () => {
-            if(State.isAdmin) {
-                document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-                document.getElementById('sheet-admin').classList.add('active');
-            } else {
-                const pin = prompt("🔐 Podaj kod autoryzacyjny:");
-                if(pin === "2137") {
-                    State.isAdmin = true;
-                    document.getElementById('admin-badge').classList.remove('hidden');
-                    showToast("Tryb Administratora Aktywny", "fa-user-shield", "#10b981");
-                    document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-                    document.getElementById('sheet-admin').classList.add('active');
-                } else if(pin !== null) {
-                    showToast("Błędny kod!", "fa-lock", "#ef4444");
-                }
-            }
-        });
-
-        // Funkcje Administracyjne
-        function deletePoint(key) {
-            if(confirm("Czy na pewno usunąć to zgłoszenie?")) {
-                remove(ref(db, `radar_live/${State.city}/alerts/${key}`))
-                    .then(() => showToast("Usunięto.", "fa-eraser", "#3b82f6"));
+        function deletePost(id) {
+            if(confirm('Usunąć ten artykuł na stałe?')) {
+                posts = posts.filter(p => p.id !== id);
+                localStorage.setItem('elk_pro_data', JSON.stringify(posts));
+                renderAdmin();
             }
         }
 
-        document.getElementById('btn-admin-clear').addEventListener('click', () => {
-            if(confirm("UWAGA! Usuniesz wszystkie znaczniki z mapy w tym mieście.")) {
-                set(ref(db, `radar_live/${State.city}/alerts`), null)
-                    .then(() => {
-                        showToast("Mapa wyczyszczona", "fa-skull", "#ef4444");
-                        document.getElementById('sheet-admin').classList.remove('active');
-                    });
-            }
-        });
+        // RENDEROWANIE STRONY GŁÓWNEJ
+        function renderHome() {
+            const container = document.getElementById('news-feed');
+            container.innerHTML = '';
 
+            if(posts.length === 0) {
+                container.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">Brak nowych wiadomości w Ełku.</p>';
+                return;
+            }
+
+            posts.forEach(post => {
+                const galleryHtml = `
+                    <div class="card-gallery">
+                        <img src="${post.images[0]}" class="${post.images.length === 1 ? 'img-full' : ''}">
+                        ${post.images[1] ? `<img src="${post.images[1]}">` : ''}
+                    </div>
+                `;
+
+                container.innerHTML += `
+                    <div class="event-card">
+                        ${galleryHtml}
+                        <div class="card-body">
+                            <span class="card-tag">Wiadomości lokalne</span>
+                            <h2 class="card-title">${post.title}</h2>
+                            <p class="card-text">${post.content.substring(0, 150)}...</p>
+                        </div>
+                        <div class="card-footer">
+                            <span><i class="far fa-calendar-alt"></i> ${post.date}</span>
+                            <span><i class="far fa-clock"></i> ${post.timestamp}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // RENDEROWANIE LISTY W PANELU
+        function renderAdmin() {
+            const list = document.getElementById('admin-list');
+            list.innerHTML = posts.map(p => `
+                <div class="admin-list-item">
+                    <span><strong>${p.title}</strong> (${p.date})</span>
+                    <button class="btn-del" onclick="deletePost(${p.id})">Usuń</button>
+                </div>
+            `).join('');
+        }
+
+        // START
+        renderHome();
     </script>
 </body>
 </html>
