@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RADAR SYSTEM v55.0 | SUPREME EDITION</title>
+    <title>RADAR SYSTEM v57.0 | ELITE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,171 +11,129 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --primary: #f59e0b;
-            --secondary: #0f172a;
-            --glass: rgba(255, 255, 255, 0.98);
-        }
-
+        :root { --primary: #f59e0b; --secondary: #0f172a; --glass: rgba(255, 255, 255, 0.98); }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
         html, body { height: 100%; width: 100%; background-color: var(--secondary); overflow: hidden; position: fixed; }
-
         #map { position: absolute; inset: 0; z-index: 10; background: #cbd5e1; }
 
-        /* Splash Screen */
-        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: transform 0.6s ease-in-out; overflow-y: auto; }
+        /* Splash & Auth UI */
+        #splash-screen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        .auth-container { width: 100%; max-width: 400px; padding: 30px; }
+        .auth-tab { padding: 12px 20px; font-weight: 800; font-size: 13px; text-transform: uppercase; border-radius: 15px; cursor: pointer; transition: 0.3s; }
+        .auth-tab.active { background: var(--secondary); color: white; }
+        
         .city-card { background: white; padding: 25px; border-radius: 35px; border: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
         .city-card.locked { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
-        
-        /* HUD */
-        .hud-top { position: fixed; top: env(safe-area-inset-top, 20px); left: 15px; right: 15px; z-index: 1000; }
-        .hud-glass { background: var(--glass); backdrop-filter: blur(20px); border-radius: 30px; padding: 15px 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
 
-        /* Bottom Menu */
-        .dock-area { position: fixed; bottom: calc(30px + env(safe-area-inset-bottom, 20px)); left: 0; right: 0; z-index: 1000; display: flex; justify-content: center; pointer-events: none; gap: 10px; }
-        .btn-add { pointer-events: auto; background: var(--secondary); color: white; padding: 20px 40px; border-radius: 40px; font-weight: 900; font-style: italic; border-bottom: 5px solid var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.3); transition: 0.3s; display: flex; align-items: center; gap: 15px; }
-        .btn-add:active { transform: translateY(3px); border-bottom-width: 0px; }
+        /* Forms */
+        .in-heavy { width: 100%; background: #f1f5f9; border: 2px solid transparent; padding: 20px; border-radius: 25px; font-weight: 700; outline: none; transition: 0.3s; }
+        .in-heavy:focus { border-color: var(--primary); background: white; }
 
-        /* Omega Sheets */
-        .sheet { 
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; 
-            background: var(--glass); border-radius: 45px 45px 0 0; 
-            padding: 40px 30px; transform: translateY(110%); 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            max-width: 600px; margin: 0 auto; box-shadow: 0 -20px 60px rgba(0,0,0,0.2);
-            max-height: 90vh; overflow-y: auto;
-        }
+        /* Sheets & HUD */
+        .hud-glass { background: var(--glass); backdrop-filter: blur(20px); border-radius: 30px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; background: var(--glass); border-radius: 45px 45px 0 0; padding: 40px 30px; transform: translateY(110%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-width: 600px; margin: 0 auto; max-height: 90vh; overflow-y: auto; }
         .sheet.active { transform: translateY(0); }
-        .btn-x { position: absolute; top: 25px; right: 25px; width: 45px; height: 45px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 20px; cursor: pointer; z-index: 2010; }
-
+        
         /* Markers */
         .m-radar { width: 60px; height: 60px; border: 4px solid white; border-radius: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .m-pulse { position: absolute; inset: -4px; border-radius: 22px; background: inherit; opacity: 0.4; animation: m-pulse 2s infinite; }
-        @keyframes m-pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }
-
-        /* UI elements */
-        .in-heavy { width: 100%; background: #f1f5f9; border: none; padding: 22px; border-radius: 25px; font-weight: 800; font-size: 16px; outline: none; margin-bottom: 12px; }
-        .hint { position: fixed; top: 120px; left: 50%; transform: translateX(-50%); z-index: 3000; background: var(--secondary); color: white; padding: 15px 30px; border-radius: 30px; font-weight: 900; border: 2px solid var(--primary); pointer-events: none; }
-        
-        .admin-view { position: fixed; inset: 0; z-index: 10000; background: #0f172a; display: flex; flex-direction: column; }
-        .tab-btn { flex: 1; padding: 20px; color: #64748b; font-weight: 900; text-align: center; border-bottom: 3px solid transparent; }
-        .tab-btn.active { color: white; border-bottom-color: var(--primary); }
-
-        /* Guide */
-        .guide-step { padding: 20px; background: #f8fafc; border-radius: 30px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
-    <audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
-
     <div id="splash-screen">
-        <div class="w-full max-w-md px-6 py-10">
-            
-            <div id="auth-section">
-                <h1 id="welcome-text" class="text-3xl font-black uppercase italic mb-2 text-center text-slate-900">Ładowanie...</h1>
-                <p id="sub-welcome" class="text-slate-400 text-center font-bold text-xs uppercase mb-8">System Radarowy v55.0</p>
-                
-                <input type="email" id="auth-email" placeholder="E-mail" class="in-heavy">
-                <input type="password" id="auth-pass" placeholder="Hasło" class="in-heavy">
-                <input type="text" id="auth-nick" placeholder="Twój Nick" class="in-heavy">
-                
-                <div class="flex gap-3 mb-6">
-                    <button onclick="handleAuth('login')" class="flex-1 bg-slate-200 p-5 rounded-3xl font-black uppercase text-xs">Logowanie</button>
-                    <button onclick="handleAuth('register')" class="flex-1 bg-amber-500 p-5 rounded-3xl font-black uppercase text-xs text-white">Rejestracja</button>
+        <div class="auth-container">
+            <div id="auth-box">
+                <h1 id="welcome-title" class="text-4xl font-black italic text-center mb-2">Ładowanie...</h1>
+                <p id="welcome-sub" class="text-center text-slate-400 font-bold text-[10px] uppercase mb-8 tracking-widest">Radar System Elite</p>
+
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
+                    <div id="tab-login" onclick="setAuthMode('login')" class="auth-tab active flex-1 text-center">Logowanie</div>
+                    <div id="tab-register" onclick="setAuthMode('register')" class="auth-tab flex-1 text-center">Rejestracja</div>
                 </div>
-                <p id="auth-error" class="text-red-500 text-[10px] font-bold text-center uppercase"></p>
+
+                <div class="space-y-3">
+                    <input type="email" id="auth-email" placeholder="E-mail" class="in-heavy">
+                    <input type="password" id="auth-pass" placeholder="Hasło" class="in-heavy">
+                    <input type="text" id="auth-nick" placeholder="Twój Nickname" class="in-heavy hidden">
+                    
+                    <button id="btn-auth-submit" onclick="handleAuthAction()" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase italic shadow-lg shadow-amber-200 mt-4 flex justify-between items-center group">
+                        <span id="btn-text">Zaloguj się</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <p id="auth-error" class="text-red-500 text-[10px] font-bold text-center uppercase mt-4"></p>
             </div>
 
             <div id="city-section" class="hidden">
-                <h1 class="text-3xl font-black uppercase text-center mb-8 italic">Gdzie jedziemy?</h1>
-                <div id="city-list" class="space-y-4">
+                <h1 class="text-3xl font-black italic mb-8">Wybierz miasto</h1>
+                <div class="space-y-4">
                     <div onclick="initCity('gorzow',[52.73, 15.23],'Gorzów Wlkp.')" class="city-card">
-                        <span class="font-black text-slate-800 uppercase italic">Gorzów Wlkp.</span>
-                        <i class="fa-solid fa-chevron-right text-amber-500"></i>
+                        <span class="font-black text-slate-800 uppercase">Gorzów Wlkp.</span>
+                        <i class="fa-solid fa-circle-play text-amber-500 text-2xl"></i>
                     </div>
                     <div class="city-card locked">
                         <div>
-                            <span class="font-black text-slate-400 uppercase italic">Poznań</span>
+                            <span class="font-black text-slate-400 uppercase">Poznań</span>
                             <p class="text-[9px] font-black text-amber-600">WKRÓTCE DOSTĘPNE</p>
                         </div>
                         <i class="fa-solid fa-lock text-slate-300"></i>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full mt-10 text-[10px] font-black text-slate-400 uppercase">Wyloguj mnie</button>
+                <button onclick="logout()" class="w-full mt-10 text-[10px] font-black text-slate-300 uppercase underline">Zmień konto</button>
             </div>
         </div>
     </div>
 
-    <div id="s-guide" class="sheet">
-        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
-        <h2 class="text-3xl font-black uppercase italic mb-8 text-slate-900">Twój Poradnik</h2>
-        <div class="guide-step flex gap-4 items-start">
-            <div class="w-10 h-10 bg-amber-500 text-white rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-plus"></i></div>
-            <p class="text-sm font-bold text-slate-600">Kliknij DODAJ, a potem dotknij mapy tam, gdzie jest kontrola.</p>
-        </div>
-        <div class="guide-step flex gap-4 items-start">
-            <div class="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-check-double"></i></div>
-            <p class="text-sm font-bold text-slate-600">Potwierdzaj zgłoszenia innych, by budować zaufanie społeczności.</p>
-        </div>
-        <button onclick="closeSheets()" class="w-full bg-amber-500 p-6 rounded-3xl text-white font-black uppercase mt-4">ZROZUMIAŁEM</button>
-    </div>
-
-    <div class="hud-top">
+    <div class="hud-top fixed top-8 left-4 right-4 z-[1000]">
         <div class="hud-glass">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-amber-500 text-xl"><i class="fa-solid fa-satellite-dish"></i></div>
-                <div><h2 id="city-name" class="text-sm font-black uppercase italic">Wybierz miasto</h2><p id="user-display" class="text-[9px] text-amber-600 font-bold uppercase">Gość</p></div>
+                <div><h2 id="city-name" class="text-sm font-black uppercase italic">Radar</h2><p id="user-display" class="text-[9px] text-amber-600 font-bold uppercase">Gość</p></div>
             </div>
-            <button onclick="openAdmin()" class="w-12 h-12 bg-slate-50 rounded-2xl text-slate-300"><i class="fa-solid fa-lock"></i></button>
+            <button onclick="logout()" class="w-10 h-10 bg-slate-100 rounded-xl text-slate-400"><i class="fa-solid fa-right-from-bracket"></i></button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="dock-area">
-        <button id="main-add-btn" onclick="triggerReport()" class="btn-add">
-            <i class="fa-solid fa-plus-circle text-2xl text-amber-500"></i> DODAJ
+    <div class="dock-area fixed bottom-10 left-0 right-0 z-[1000] flex justify-center pointer-events-none gap-4">
+        <button onclick="triggerReport()" class="pointer-events-auto bg-slate-900 text-white px-10 py-5 rounded-[35px] font-black italic border-b-4 border-amber-500 shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-plus-circle text-amber-500"></i> DODAJ
         </button>
-        <button onclick="openSheet('s-guide')" class="btn-add bg-blue-600 border-blue-800">
-            <i class="fa-solid fa-circle-question text-2xl text-white"></i>
+        <button onclick="openSheet('s-guide')" class="pointer-events-auto bg-blue-600 text-white w-16 h-16 rounded-[25px] shadow-2xl flex items-center justify-center">
+            <i class="fa-solid fa-question text-xl"></i>
         </button>
     </div>
 
-    <div id="s-info" class="sheet">
-        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
-        <div class="text-center">
-            <div id="v-icon" class="text-8xl mb-4"></div>
-            <p id="v-sub" class="text-slate-400 font-black uppercase text-xs mb-1"></p>
-            <h2 id="v-title" class="text-6xl font-black text-slate-900 mb-6"></h2>
-            <div class="bg-slate-50 rounded-3xl p-6 mb-6 grid grid-cols-2 gap-4 text-left">
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Dodane przez</p><p id="v-author" class="text-sm font-black text-amber-600 uppercase"></p></div>
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Czas</p><p id="v-time" class="text-sm font-black text-slate-700"></p></div>
-            </div>
-            <div class="bg-slate-900 text-white p-6 rounded-3xl mb-8">
-                <p id="v-desc" class="text-xl font-bold italic uppercase"></p>
-            </div>
-            <button id="v-confirm" class="w-full bg-green-500 text-white p-6 rounded-3xl font-black uppercase italic">Nadal stoi</button>
-        </div>
+    <div id="s-guide" class="sheet">
+        <h2 class="text-2xl font-black italic mb-6">Szybki Start</h2>
+        <p class="text-slate-500 font-medium mb-6">Witaj w społeczności Radaru. Kliknij "Dodaj", a potem wskaż punkt na mapie. Twój Nick będzie widoczny przy zgłoszeniu.</p>
+        <button onclick="closeSheets()" class="w-full bg-slate-900 text-white p-5 rounded-3xl font-black uppercase">Zaczynamy!</button>
     </div>
 
     <div id="s-type" class="sheet">
-        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
-        <h3 class="text-center font-black uppercase text-slate-400 mb-8 tracking-widest text-xs">Co widziałeś?</h3>
         <div class="grid grid-cols-3 gap-4">
-            <button onclick="pickType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] text-red-600 border-2 border-red-100"><i class="fa-solid fa-user-secret text-3xl"></i><span class="text-[10px] font-black uppercase">Bilety</span></button>
-            <button onclick="pickType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center gap-4 p-6 bg-amber-50 rounded-[35px] text-amber-600 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-3xl"></i><span class="text-[10px] font-black uppercase">Awaria</span></button>
-            <button onclick="pickType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] text-blue-600 border-2 border-blue-100"><i class="fa-solid fa-clock text-3xl"></i><span class="text-[10px] font-black uppercase">Korek</span></button>
+            <button onclick="pickType('KONTROLA','fa-user-secret','#ef4444')" class="flex flex-col items-center gap-4 p-6 bg-red-50 rounded-[35px] text-red-600 border-2 border-red-100"><i class="fa-solid fa-user-secret text-3xl"></i></button>
+            <button onclick="pickType('AWARIA','fa-triangle-exclamation','#f59e0b')" class="flex flex-col items-center gap-4 p-6 bg-amber-50 rounded-[35px] text-amber-600 border-2 border-amber-100"><i class="fa-solid fa-triangle-exclamation text-3xl"></i></button>
+            <button onclick="pickType('KOREK','fa-clock','#3b82f6')" class="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[35px] text-blue-600 border-2 border-blue-100"><i class="fa-solid fa-clock text-3xl"></i></button>
         </div>
     </div>
 
     <div id="s-form" class="sheet">
-        <div onclick="closeSheets()" class="btn-x"><i class="fa-solid fa-xmark"></i></div>
-        <h2 class="text-2xl font-black uppercase italic mb-8">Szczegóły</h2>
-        <input type="text" id="in-line" placeholder="LINIA" class="in-heavy uppercase text-center text-3xl" maxlength="4">
-        <input type="text" id="in-dir" oninput="doSearch()" placeholder="KIERUNEK..." class="in-heavy">
-        <div id="search-list" class="space-y-2 mb-8 max-h-40 overflow-y-auto"></div>
-        <button onclick="submitReport()" class="w-full bg-amber-500 text-white p-6 rounded-3xl font-black uppercase shadow-xl">PUBLIKUJ ZGŁOSZENIE</button>
+        <input type="text" id="in-line" placeholder="NUMER LINII" class="in-heavy uppercase text-center text-2xl mb-4" maxlength="4">
+        <input type="text" id="in-dir" oninput="doSearch()" placeholder="KIERUNEK (OPCJONALNIE)" class="in-heavy mb-6">
+        <div id="search-list" class="max-h-40 overflow-y-auto mb-6"></div>
+        <button onclick="submitReport()" class="w-full bg-amber-500 text-white p-6 rounded-[30px] font-black uppercase italic">Opublikuj na mapie</button>
+    </div>
+
+    <div id="s-info" class="sheet">
+        <div class="text-center">
+            <div id="v-icon" class="text-7xl mb-4"></div>
+            <h2 id="v-title" class="text-5xl font-black mb-4"></h2>
+            <p id="v-desc" class="bg-slate-100 p-4 rounded-2xl font-bold uppercase mb-4"></p>
+            <p class="text-[10px] font-black text-slate-400">DODANE PRZEZ: <span id="v-author" class="text-amber-600"></span></p>
+            <button id="v-confirm" class="w-full bg-green-500 text-white p-5 rounded-3xl font-black uppercase mt-8 italic">Potwierdzam</button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -184,112 +142,94 @@
         import { getAuth, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
         import { getDatabase, ref, set, push, onValue, update, remove, increment } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-        const fbConfig = { 
-            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app"
-        };
-        
+        const fbConfig = { databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app" };
         const app = initializeApp(fbConfig);
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // Zapamiętywanie sesji na stałe
         setPersistence(auth, browserLocalPersistence);
 
-        const State = { city: '', user: null, tPos: null, tMark: null, sel: null, dirs: [], markers: { n:{}, s:{} }, admin: false, spawn: false };
+        let currentAuthMode = 'login';
+        const State = { city: '', user: null, tPos: null, sel: null, dirs: [], markers: {} };
+
         const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([52.23, 21.01], 6);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
 
-        // Logika powitalna i sprawdzanie "czy już był"
-        function checkFirstVisit() {
-            const hasBeenBefore = localStorage.getItem('radar_visited');
-            const welcomeTitle = document.getElementById('welcome-text');
-            
-            if (hasBeenBefore) {
-                welcomeTitle.innerText = "Witaj ponownie!";
-            } else {
-                welcomeTitle.innerText = "Witaj w Radarze!";
-                // Pokaż poradnik przy pierwszym wejściu po rejestracji (uruchamiane w handleAuth)
-            }
-        }
-        checkFirstVisit();
+        // UI AUTH LOGIC
+        window.setAuthMode = (mode) => {
+            currentAuthMode = mode;
+            document.getElementById('tab-login').className = `auth-tab flex-1 text-center ${mode==='login'?'active':''}`;
+            document.getElementById('tab-register').className = `auth-tab flex-1 text-center ${mode==='register'?'active':''}`;
+            document.getElementById('auth-nick').classList.toggle('hidden', mode === 'login');
+            document.getElementById('btn-text').innerText = mode === 'login' ? 'Zaloguj się' : 'Stwórz konto i dalej';
+        };
 
-        // OBSŁUGA LOGOWANIA / REJESTRACJI
-        window.handleAuth = async (mode) => {
+        window.handleAuthAction = async () => {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
             const nick = document.getElementById('auth-nick').value;
             const err = document.getElementById('auth-error');
+            const btnText = document.getElementById('btn-text');
+
+            err.innerText = "";
+            btnText.innerText = "Chwileczkę...";
 
             try {
-                if(mode === 'register') {
-                    if(!nick) throw new Error("Musisz podać nick!");
+                if(currentAuthMode === 'register') {
+                    if(!nick) throw new Error("Wpisz swój nick!");
                     const res = await createUserWithEmailAndPassword(auth, email, pass);
                     await updateProfile(res.user, { displayName: nick });
                     await sendEmailVerification(res.user);
-                    alert("Wysłaliśmy link weryfikacyjny! Sprawdź pocztę i kliknij go, aby móc się zalogować.");
+                    alert("Wysłaliśmy maila! Zweryfikuj go i wróć tutaj.");
+                    setAuthMode('login');
                 } else {
                     const res = await signInWithEmailAndPassword(auth, email, pass);
                     if(!res.user.emailVerified) {
-                        alert("Twój e-mail nie jest zweryfikowany!");
+                        alert("Najpierw zweryfikuj maila!");
                         await signOut(auth);
-                        return;
                     }
-                    // Oznacz, że użytkownik już był
-                    localStorage.setItem('radar_visited', 'true');
-                    showCitySelect();
                 }
-            } catch (e) { err.innerText = e.message; }
-        };
-
-        window.logout = () => {
-            signOut(auth).then(() => {
-                location.reload();
-            });
+            } catch (e) { 
+                err.innerText = "Błąd: " + e.message; 
+            } finally {
+                btnText.innerText = currentAuthMode === 'login' ? 'Zaloguj się' : 'Stwórz konto i dalej';
+            }
         };
 
         onAuthStateChanged(auth, (u) => {
+            const visited = localStorage.getItem('radar_elite_v1');
+            document.getElementById('welcome-title').innerText = visited ? "Witaj ponownie!" : "Cześć!";
+            
             if(u && u.emailVerified) {
                 State.user = u;
-                document.getElementById('user-display').innerText = u.displayName ? u.displayName.toUpperCase() : "UŻYTKOWNIK";
-                localStorage.setItem('radar_visited', 'true');
-                showCitySelect();
-            } else {
-                document.getElementById('welcome-text').innerText = localStorage.getItem('radar_visited') ? "Witaj ponownie!" : "Witaj w Radarze!";
+                localStorage.setItem('radar_elite_v1', 'true');
+                document.getElementById('user-display').innerText = u.displayName.toUpperCase();
+                document.getElementById('auth-box').classList.add('hidden');
+                document.getElementById('city-section').classList.remove('hidden');
             }
         });
 
-        function showCitySelect() {
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('city-section').classList.remove('hidden');
-            // Jeśli to pierwszy raz, pokaż poradnik
-            if(!localStorage.getItem('guide_shown')) {
-                setTimeout(() => { openSheet('s-guide'); localStorage.setItem('guide_shown', 'true'); }, 1000);
-            }
-        }
+        window.logout = () => signOut(auth).then(() => location.reload());
 
+        // MAP & REPORTING LOGIC (ZACHOWANA)
         window.initCity = (id, pos, name) => {
             State.city = id;
             document.getElementById('splash-screen').style.transform = 'translateY(-100%)';
             document.getElementById('city-name').innerText = name.toUpperCase();
             map.setView(pos, 14);
-            
-            // Subskrypcja zgłoszeń
             onValue(ref(db, `v38/${id}/alerts`), (s) => {
                 const data = s.val() || {};
-                Object.keys(State.markers.n).forEach(k => { if(!data[k]) { map.removeLayer(State.markers.n[k]); delete State.markers.n[k]; }});
                 Object.entries(data).forEach(([k, v]) => {
-                    if(!State.markers.n[k]) {
-                        const icon = `<div class="m-radar" style="background:${v.color}"><div class="m-pulse" style="background:${v.color}"></div><i class="fa-solid ${v.icon} text-2xl"></i><div class="bg-black/40 px-2 py-0.5 rounded text-[10px] font-black mt-1">${v.line}</div></div>`;
-                        State.markers.n[k] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[30,30] }) }).addTo(map).on('click', () => showInfo(k,v,false));
+                    if(!State.markers[k]) {
+                        const icon = `<div class="m-radar" style="background:${v.color}"><i class="fa-solid ${v.icon} text-2xl"></i><div class="bg-black/40 px-2 py-0.5 rounded text-[10px] font-black mt-1">${v.line}</div></div>`;
+                        State.markers[k] = L.marker([v.lat, v.lng], { icon: L.divIcon({ className:'', html:icon, iconAnchor:[30,30] }) }).addTo(map).on('click', () => showInfo(k,v));
                     }
                 });
             });
-
-            onValue(ref(db, `v38/${id}/config`), (s) => State.dirs = s.val() || []);
         };
 
         window.triggerReport = () => {
-            const h = document.createElement('div'); h.className = "hint"; h.id = "h-tap"; h.innerText = "KLIKNIJ NA MAPIE";
+            const h = document.createElement('div'); h.className = "fixed top-32 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full font-black z-[3000]"; h.id = "h-tap"; h.innerText = "DOTKNIJ MIEJSCA NA MAPIE";
             document.body.appendChild(h);
         };
 
@@ -302,54 +242,27 @@
         });
 
         window.pickType = (t, i, c) => { State.sel = { type:t, icon:i, color:c }; closeSheets(); openSheet('s-form'); };
-
         window.submitReport = () => {
             const l = document.getElementById('in-line').value.trim().toUpperCase();
-            const d = document.getElementById('in-dir').value.trim() || "Brak";
-            if(!l) return alert("Podaj numer linii!");
-            
+            if(!l) return;
             push(ref(db, `v38/${State.city}/alerts`), { 
-                ...State.sel, line:l, dir:d, lat:State.tPos.lat, lng:State.tPos.lng, 
-                createdAt:Date.now(), lastActive:Date.now(), votes:1, author: State.user.displayName || "Kierowca"
+                ...State.sel, line:l, dir:document.getElementById('in-dir').value, lat:State.tPos.lat, lng:State.tPos.lng, 
+                createdAt:Date.now(), lastActive:Date.now(), author: State.user.displayName 
             });
-            
-            document.getElementById('snd-click').play();
             closeSheets();
-            document.getElementById('in-line').value = '';
-            document.getElementById('in-dir').value = '';
         };
 
-        window.showInfo = (id, data, isAdminEv) => {
+        window.showInfo = (id, data) => {
             openSheet('s-info');
             document.getElementById('v-icon').style.color = data.color;
             document.getElementById('v-icon').innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
-            document.getElementById('v-sub').innerText = data.type;
             document.getElementById('v-title').innerText = data.line;
-            document.getElementById('v-desc').innerText = data.dir;
-            document.getElementById('v-author').innerText = data.author;
-            document.getElementById('v-time').innerText = `${Math.floor((Date.now() - data.lastActive)/60000)}m temu`;
-
-            const btn = document.getElementById('v-confirm');
-            btn.onclick = () => { 
-                update(ref(db, `v38/${State.city}/alerts/${id}`), { votes:increment(1), lastActive:Date.now() }); 
-                closeSheets(); 
-            };
+            document.getElementById('v-desc').innerText = data.dir || "Brak kierunku";
+            document.getElementById('v-author').innerText = data.author || "Anonim";
         };
 
         window.openSheet = (id) => document.getElementById(id).classList.add('active');
         window.closeSheets = () => document.querySelectorAll('.sheet').forEach(s => s.classList.remove('active'));
-
-        window.doSearch = () => {
-            const q = document.getElementById('in-dir').value.toLowerCase();
-            document.getElementById('search-list').innerHTML = q ? State.dirs.filter(d => d.toLowerCase().includes(q)).map(d => `<div onclick="setDir('${d}')" class="p-4 bg-white/50 rounded-xl font-bold mb-1 shadow-sm">${d}</div>`).join('') : '';
-        };
-        window.setDir = (d) => { document.getElementById('in-dir').value = d; document.getElementById('search-list').innerHTML = ''; };
-
-        map.locate({ watch:true, enableHighAccuracy:true });
-        map.on('locationfound', (e) => {
-            if(!window.uM) window.uM = L.circleMarker(e.latlng, { radius:8, color:'#fff', weight:4, fillColor:'#3b82f6', fillOpacity:1 }).addTo(map);
-            else window.uM.setLatLng(e.latlng);
-        });
     </script>
 </body>
 </html>
