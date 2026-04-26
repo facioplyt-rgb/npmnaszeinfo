@@ -46,6 +46,11 @@
         .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
         .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; }
         body.admin-active .del-comm-btn { display: block; }
+        
+        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; margin-top: 5px; cursor: pointer; opacity: 0.6; }
+        .reply-btn:hover { opacity: 1; }
+        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; items-center: gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     </style>
 </head>
 <body id="main-body">
@@ -112,7 +117,7 @@
                 <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
                 <div id="comments-list" class="space-y-4 mb-8"></div>
                 
-                <div class="glass p-6 rounded-[24px] space-y-4">
+                <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4">
                     <input type="text" id="comm-nick" placeholder="Twój Nick" class="input-dark">
                     <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
                     <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition">Wyślij komentarz</button>
@@ -233,9 +238,7 @@
                         document.getElementById('view-home').classList.add('hidden');
                         document.getElementById('search-area').classList.add('hidden');
                         document.getElementById('view-admin').classList.remove('hidden');
-                    } else {
-                        alert("Błędny kod!");
-                    }
+                    } else { alert("Błędny kod!"); }
                 });
             },
 
@@ -262,10 +265,8 @@
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const customDate = document.getElementById('in-date').value;
                 const files = document.getElementById('in-files').files;
-
                 if(!t || !c) return alert("Uzupełnij pola!");
                 document.getElementById('loader').style.display = 'flex';
-
                 let newImageUrls = [];
                 if(files && files.length > 0) {
                     for(let i=0; i<files.length; i++) {
@@ -278,12 +279,9 @@
                         } catch(e) {}
                     }
                 }
-
                 const finalImages = [...currentEditImages, ...newImageUrls];
                 const nowStr = new Date().toLocaleString('pl-PL');
-
                 let postData = { title: t, content: c, author: a, category: cat, images: finalImages };
-
                 if(editId) {
                     const old = allData.find(x => x.id === editId);
                     postData.date = customDate || old.date;
@@ -294,7 +292,6 @@
                     postData.ts = Date.now();
                     postData.likes = 0;
                 }
-
                 const action = editId ? postsRef.child(editId).update(postData) : postsRef.push(postData);
                 action.then(() => location.reload()).catch(err => {
                     alert(err.message);
@@ -352,7 +349,6 @@
                 container.innerHTML = "";
                 const toShow = isSearching ? items : items.slice(0, showLimit);
                 if(toShow.length === 0) { container.innerHTML = "<div class='text-center py-20 opacity-50'>Brak wpisów</div>"; return; }
-
                 toShow.forEach(v => {
                     const card = document.createElement('div');
                     card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
@@ -368,9 +364,14 @@
 
             likePost: () => {
                 if(!currentOpenPostId) return;
+                const storageKey = `liked_${currentOpenPostId}`;
+                if(localStorage.getItem(storageKey)) return alert("Już zareagowałeś na ten post!");
+                
                 const post = allData.find(x => x.id === currentOpenPostId);
                 const currentLikes = post.likes || 0;
-                postsRef.child(currentOpenPostId).update({ likes: currentLikes + 1 });
+                postsRef.child(currentOpenPostId).update({ likes: currentLikes + 1 }).then(() => {
+                    localStorage.setItem(storageKey, "true");
+                });
             },
 
             addComment: () => {
@@ -378,8 +379,24 @@
                 const text = document.getElementById('comm-text').value;
                 if(!nick || !text) return alert("Uzupełnij nick i komentarz!");
                 db.ref(`elk/comments/${currentOpenPostId}`).push({
-                    nick: nick, text: text, date: new Date().toLocaleString('pl-PL'), ts: Date.now()
+                    nick: nick, text: text, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0
                 }).then(() => { document.getElementById('comm-text').value = ""; });
+            },
+
+            replyTo: (nick) => {
+                const area = document.getElementById('comm-text');
+                area.value = `@${nick} ` + area.value;
+                area.focus();
+                document.getElementById('comment-box-anchor').scrollIntoView({behavior: 'smooth'});
+            },
+
+            reactComment: (cid) => {
+                const storageKey = `react_comm_${cid}`;
+                if(localStorage.getItem(storageKey)) return;
+                
+                const ref = db.ref(`elk/comments/${currentOpenPostId}/${cid}/reacts`);
+                ref.transaction((current) => (current || 0) + 1);
+                localStorage.setItem(storageKey, "true");
             },
 
             deleteComment: (commentId) => {
@@ -403,6 +420,12 @@
                                     <span class="text-[9px] opacity-30">${c.date}</span>
                                 </div>
                                 <p class="text-sm text-slate-300">${c.text}</p>
+                                <div class="flex items-center gap-3 mt-2">
+                                    <div onclick="core.reactComment('${cid}')" class="comm-react-btn">
+                                        <i class="fa-solid fa-heart"></i> <span>${c.reacts || 0}</span>
+                                    </div>
+                                    <span onclick="core.replyTo('${c.nick}')" class="reply-btn">Odpowiedz</span>
+                                </div>
                             </div>`;
                     });
                 });
