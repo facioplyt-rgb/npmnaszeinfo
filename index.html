@@ -21,24 +21,22 @@
         .input-dark { background: #0b0f1a; border: 2px solid #2d3748; border-radius: 12px; padding: 12px; width: 100%; color: white; outline: none; transition: 0.3s; }
         .input-dark:focus { border-color: var(--main); }
         
-        /* Modal Logowania */
         #login-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .login-box { width: 90%; max-width: 400px; padding: 2.5rem; border-radius: 30px; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); }
         
         .white-pre { white-space: pre-wrap; word-wrap: break-word; }
-        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; }
-        
-        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; border-bottom: 2px solid var(--main); padding-bottom: 5px; }
         .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
-        
+        .md-small { font-size: 0.85rem; opacity: 0.7; display: block; color: #94a3b8; }
+
         .tab-btn { padding: 10px 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
-        .tab-btn.active { background: var(--main); color: white; }
+        .tab-btn.active { background: var(--main); color: white; border-color: var(--main); }
 
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: var(--main); color: white; }
+        .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
+        
         .comment-item { border-left: 3px solid var(--main); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 0 15px 15px 0; margin-bottom: 12px; }
-        .preview-wrapper { position: relative; width: 65px; height: 65px; }
-        .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
-        .preview-del { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        #loader { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -48,14 +46,13 @@
     <div id="login-modal">
         <div class="login-box shadow-2xl">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-black italic uppercase">Redakcja</h2>
+                <h2 class="text-2xl font-black italic uppercase">Panel Redakcji</h2>
                 <button onclick="core.closeLogin()" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="space-y-4">
                 <input type="email" id="login-email" placeholder="E-mail" class="input-dark">
                 <input type="password" id="login-pass" placeholder="Hasło" class="input-dark">
-                <button onclick="core.loginEmail()" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase hover:bg-blue-700 transition">Zaloguj się</button>
-                <div class="text-center text-[10px] text-slate-500 font-bold py-2">LUB</div>
+                <button onclick="core.loginEmail()" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase">Zaloguj</button>
                 <button onclick="core.loginGoogle()" class="w-full bg-white text-black p-4 rounded-xl font-bold uppercase flex items-center justify-center gap-3">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Google
                 </button>
@@ -65,11 +62,11 @@
 
     <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
-            <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> INFORMACJE</h1>
+            <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase italic">EŁK <span class="text-blue-500">NASZE</span> INFORMACJE</h1>
             <div class="flex items-center gap-4">
-                <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase">Admin</span>
-                <button id="btn-login-trigger" onclick="core.showLogin()" class="text-[10px] font-bold uppercase opacity-60 hover:opacity-100 transition">Panel</button>
-                <button id="btn-logout" onclick="auth.signOut()" class="hidden text-[10px] font-bold uppercase text-red-500 transition">Wyloguj</button>
+                <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase">Redaktor</span>
+                <button id="btn-login-trigger" onclick="core.showLogin()" class="text-[10px] font-bold uppercase opacity-60">Panel</button>
+                <button id="btn-logout" onclick="auth.signOut()" class="hidden text-[10px] font-bold uppercase text-red-500">Wyloguj</button>
             </div>
         </div>
     </header>
@@ -77,10 +74,11 @@
     <main class="max-w-6xl mx-auto px-4">
         <div id="search-area" class="mb-8 space-y-6">
             <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj newsa..." class="input-dark">
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
                 <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
                 <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
                 <button onclick="core.switchTab('Informacje', this)" class="tab-btn">Informacje</button>
+                <button onclick="core.switchTab('Aktualizacje', this)" class="tab-btn">Aktualizacje</button>
             </div>
         </div>
 
@@ -89,69 +87,46 @@
         </div>
 
         <div id="view-article" class="hidden pb-20 max-w-4xl mx-auto">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold uppercase text-xs flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left"></i> Wróć
-            </button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold uppercase text-xs flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
             <div id="article-content"></div>
-            
             <div class="mt-12 pt-12 border-t border-white/10">
                 <div onclick="core.likePost()" class="inline-flex items-center gap-3 bg-white/5 px-8 py-3 rounded-full cursor-pointer border border-white/10 hover:bg-white/10 transition">
                     <i class="fa-solid fa-heart text-red-500"></i> <span id="like-count" class="font-black">0</span>
                 </div>
-                
                 <div id="comments-list" class="mt-12 space-y-6"></div>
-                
                 <div class="mt-10 glass p-8 rounded-3xl space-y-4 border border-blue-500/20">
-                    <div id="reply-info" class="hidden flex justify-between bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
-                        <span class="text-xs font-bold opacity-70">Odpowiadasz użytkownikowi: <span id="reply-nick" class="text-blue-400"></span></span>
-                        <button onclick="core.cancelReply()" class="text-red-500 font-black text-xs">X</button>
-                    </div>
                     <input type="text" id="comm-nick" placeholder="Twój Nick" class="input-dark">
-                    <textarea id="comm-text" rows="3" placeholder="Treść komentarza..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-tighter">Dodaj komentarz</button>
+                    <textarea id="comm-text" rows="3" placeholder="Dodaj komentarz..." class="input-dark"></textarea>
+                    <button onclick="core.addComment()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase">Wyślij</button>
                 </div>
             </div>
         </div>
 
         <div id="view-admin" class="hidden pb-20">
-            <div class="flex gap-4 mb-8">
-                <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Nowy Artykuł</button>
-                <button onclick="core.setAdminTab('reports')" id="btn-adm-reports" class="tab-btn">Zgłoszenia <span id="rep-badge" class="hidden bg-red-500 px-1.5 rounded text-[8px]">0</span></button>
-            </div>
-
-            <div id="admin-new" class="max-w-2xl mx-auto glass p-8 rounded-3xl border border-white/10">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 id="adm-title-label" class="text-2xl font-black italic uppercase">Opublikuj newsa</h2>
-                    <button id="btn-cancel-edit" onclick="core.cancelEdit()" class="hidden text-red-500 text-xs font-black uppercase">Anuluj edycję</button>
-                </div>
+            <div class="max-w-2xl mx-auto glass p-8 rounded-3xl border border-white/10">
+                <h2 class="text-2xl font-black mb-6 uppercase italic text-blue-500">Zarządzanie Treścią</h2>
                 <div class="space-y-4">
-                    <input type="text" id="in-title" placeholder="Tytuł artykułu" class="input-dark text-lg font-bold">
+                    <input type="text" id="in-title" placeholder="Tytuł" class="input-dark">
                     <div class="grid grid-cols-2 gap-4">
                         <input type="text" id="in-author" placeholder="Autor" class="input-dark">
                         <select id="in-category" class="input-dark">
                             <option value="Wydarzenia">Wydarzenia</option>
                             <option value="Informacje">Informacje</option>
-                            <option value="Sport">Sport</option>
+                            <option value="Aktualizacje">Aktualizacje</option>
                         </select>
                     </div>
-                    <textarea id="in-content" rows="12" placeholder="Treść (Obsługuje Markdown)..." class="input-dark"></textarea>
-                    <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
-                        <input type="file" id="in-files" multiple onchange="core.previewFiles()" class="text-xs mb-4">
-                        <div id="preview-container" class="flex flex-wrap gap-3"></div>
-                    </div>
-                    <button onclick="core.publish()" class="w-full bg-blue-600 p-5 rounded-2xl font-black uppercase text-lg shadow-xl shadow-blue-500/20">Zapisz i Opublikuj</button>
-                    
-                    <div id="admin-posts-list" class="mt-12 space-y-2 opacity-50"></div>
+                    <textarea id="in-content" rows="10" placeholder="Treść (H1: #, H3: ###, Mały: -#)" class="input-dark"></textarea>
+                    <input type="file" id="in-files" multiple class="text-xs">
+                    <button onclick="core.publish()" class="w-full bg-blue-600 p-5 rounded-2xl font-black uppercase">Opublikuj Post</button>
+                    <div id="admin-posts-list" class="mt-10 space-y-2"></div>
                 </div>
             </div>
-
-            <div id="admin-reports" class="hidden max-w-2xl mx-auto space-y-4"></div>
         </div>
     </main>
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSy...", // Twoje API Key
+            apiKey: "AIzaSy...", 
             authDomain: "mzk-by-facio.firebaseapp.com",
             databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "mzk-by-facio",
@@ -164,64 +139,56 @@
         const auth = firebase.auth();
 
         let allPosts = [];
-        let editId = null;
         let currentPostId = null;
-        let currentReplyId = null;
         let currentTab = 'all';
-        let uploadedImages = [];
 
         window.core = {
-            // UI & Nawigacja
+            parseMd: (t) => {
+                if(!t) return "";
+                return t.replace(/^# (.*$)/gm, '<span class="md-h1">$1</span>')
+                        .replace(/^### (.*$)/gm, '<span class="md-h3">$1</span>')
+                        .replace(/^-# (.*$)/gm, '<span class="md-small">$1</span>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+            },
+
             goHome: () => {
-                document.querySelectorAll('main > div').forEach(d => d.classList.add('hidden'));
                 document.getElementById('view-home').classList.remove('hidden');
                 document.getElementById('search-area').classList.remove('hidden');
-                currentPostId = null;
+                document.getElementById('view-article').classList.add('hidden');
+                document.getElementById('view-admin').classList.add('hidden');
                 window.scrollTo(0,0);
             },
+
             showLogin: () => document.getElementById('login-modal').style.display = 'flex',
             closeLogin: () => document.getElementById('login-modal').style.display = 'none',
-            
-            // Logowanie
+
             loginEmail: async () => {
                 const e = document.getElementById('login-email').value;
                 const p = document.getElementById('login-pass').value;
-                try { await auth.signInWithEmailAndPassword(e, p); core.closeLogin(); } catch(e) { alert(e.message); }
+                try { await auth.signInWithEmailAndPassword(e, p); core.closeLogin(); } catch(err) { alert(err.message); }
             },
+
             loginGoogle: async () => {
-                try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); core.closeLogin(); } catch(e) { alert(e.message); }
+                try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); core.closeLogin(); } catch(err) { alert(err.message); }
             },
 
-            // Markdown
-            parseMd: (txt) => {
-                if(!txt) return "";
-                return txt.replace(/^# (.*$)/gm, '<span class="md-h1">$1</span>')
-                          .replace(/^### (.*$)/gm, '<span class="md-h3">$1</span>')
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\n/g, '<br>');
+            switchTab: (tab, btn) => {
+                currentTab = tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                core.filterPosts();
             },
 
-            // Admin
-            setAdminTab: (tab) => {
-                document.getElementById('admin-new').classList.toggle('hidden', tab !== 'new');
-                document.getElementById('admin-reports').classList.toggle('hidden', tab !== 'reports');
-                document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.toggle('active', b.id.includes(tab)));
-            },
-
-            previewFiles: () => {
-                const container = document.getElementById('preview-container');
-                container.innerHTML = "";
-                uploadedImages.forEach((url, i) => {
-                    container.innerHTML += `<div class="preview-wrapper"><img src="${url}"><div class="preview-del" onclick="core.removeImg(${i})">X</div></div>`;
+            filterPosts: () => {
+                const query = document.getElementById('search-input').value.toLowerCase();
+                let filtered = allPosts.filter(p => {
+                    const matchSearch = p.title.toLowerCase().includes(query) || p.content.toLowerCase().includes(query);
+                    const matchTab = currentTab === 'all' || p.category === currentTab;
+                    return matchSearch && matchTab;
                 });
-                Array.from(document.getElementById('in-files').files).forEach(f => {
-                    const r = new FileReader();
-                    r.onload = (e) => container.innerHTML += `<div class="preview-wrapper opacity-40"><img src="${e.target.result}"></div>`;
-                    r.readAsDataURL(f);
-                });
+                core.render(filtered);
             },
-
-            removeImg: (i) => { uploadedImages.splice(i, 1); core.previewFiles(); },
 
             publish: async () => {
                 const t = document.getElementById('in-title').value;
@@ -229,99 +196,36 @@
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const cat = document.getElementById('in-category').value;
                 const files = document.getElementById('in-files').files;
-
                 if(!t || !c) return alert("Pola!");
-                document.getElementById('loader').style.display = 'flex';
 
-                let newUrls = [];
+                document.getElementById('loader').style.display = 'flex';
+                let urls = [];
                 for(let f of files) {
                     const fd = new FormData(); fd.append("image", f);
                     const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
                     const d = await r.json();
-                    if(d.success) newUrls.push(d.data.url);
+                    if(d.success) urls.push(d.data.url);
                 }
 
-                const data = {
-                    title: t, content: c, author: a, category: cat, images: [...uploadedImages, ...newUrls],
-                    ts: editId ? allPosts.find(x=>x.id===editId).ts : Date.now(),
-                    date: editId ? allPosts.find(x=>x.id===editId).date : new Date().toLocaleString('pl-PL'),
-                    likes: editId ? allPosts.find(x=>x.id===editId).likes : 0
-                };
-
-                const ref = editId ? db.ref('elk/posts/' + editId).update(data) : db.ref('elk/posts').push(data);
-                ref.then(() => location.reload());
+                db.ref('elk/posts').push({
+                    title: t, content: c, author: a, category: cat, images: urls,
+                    date: new Date().toLocaleString('pl-PL'), ts: Date.now(), likes: 0
+                }).then(() => location.reload());
             },
 
-            editPost: (id) => {
-                const p = allPosts.find(x => x.id === id);
-                editId = id;
-                document.getElementById('in-title').value = p.title;
-                document.getElementById('in-content').value = p.content;
-                document.getElementById('in-author').value = p.author;
-                uploadedImages = p.images ? [...p.images] : [];
-                document.getElementById('adm-title-label').innerText = "Edytuj wpis";
-                document.getElementById('btn-cancel-edit').classList.remove('hidden');
-                core.previewFiles();
-                window.scrollTo(0,0);
-            },
-
-            cancelEdit: () => {
-                editId = null; uploadedImages = [];
-                document.getElementById('in-title').value = "";
-                document.getElementById('in-content').value = "";
-                document.getElementById('adm-title-label').innerText = "Opublikuj newsa";
-                document.getElementById('btn-cancel-edit').classList.add('hidden');
-                core.previewFiles();
-            },
-
-            // System Komentarzy
-            addComment: () => {
-                const n = document.getElementById('comm-nick').value;
-                const t = document.getElementById('comm-text').value;
-                if(!n || !t) return alert("Wypełnij pola!");
-                
-                const ref = currentReplyId ? db.ref(`elk/comments/${currentPostId}/${currentReplyId}/replies`) : db.ref(`elk/comments/${currentPostId}`);
-                ref.push({ nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now() }).then(() => {
-                    document.getElementById('comm-text').value = "";
-                    core.cancelReply();
-                });
-            },
-
-            cancelReply: () => { currentReplyId = null; document.getElementById('reply-info').classList.add('hidden'); },
-            
-            setReply: (cid, nick) => {
-                currentReplyId = cid;
-                document.getElementById('reply-nick').innerText = nick;
-                document.getElementById('reply-info').classList.remove('hidden');
-                document.getElementById('comm-text').focus();
-            },
-
-            reportComment: (pid, cid) => {
-                if(confirm("Zgłosić ten komentarz do moderacji?")) {
-                    db.ref('elk/reports').push({ postId: pid, commId: cid, ts: Date.now() });
-                    alert("Zgłoszono!");
-                }
-            },
-
-            likePost: () => {
-                const p = allPosts.find(x => x.id === currentPostId);
-                db.ref(`elk/posts/${currentPostId}/likes`).set((p.likes || 0) + 1);
-            },
-
-            // Renderowanie
             render: (items) => {
                 const container = document.getElementById('news-container');
                 container.innerHTML = "";
                 items.forEach(p => {
                     const card = document.createElement('div');
-                    card.className = "card rounded-3xl overflow-hidden cursor-pointer post-anim";
+                    card.className = "card rounded-3xl overflow-hidden cursor-pointer";
                     card.innerHTML = `
-                        ${p.images?.[0] ? `<img src="${p.images[0]}" class="w-full h-52 object-cover">` : ''}
-                        <div class="p-6">
+                        ${p.images?.[0] ? `<img src="${p.images[0]}" class="w-full h-48 object-cover">` : ''}
+                        <div class="p-5">
                             <span class="category-tag">${p.category}</span>
                             <h2 class="text-xl font-bold mt-2 leading-tight">${p.title}</h2>
-                            <div class="flex justify-between items-center mt-6 opacity-40 text-[10px] font-black uppercase">
-                                <span>${p.author}</span>
+                            <div class="flex justify-between items-center mt-4 opacity-40 text-[10px] font-black uppercase">
+                                <span><i class="fa-solid fa-user text-blue-500"></i> ${p.author}</span>
                                 <span>${p.date.split(',')[0]}</span>
                             </div>
                         </div>`;
@@ -336,56 +240,48 @@
                 document.getElementById('search-area').classList.add('hidden');
                 document.getElementById('view-article').classList.remove('hidden');
                 document.getElementById('article-content').innerHTML = `
-                    <h1 class="text-4xl md:text-6xl font-black mb-6 leading-none italic">${p.title}</h1>
-                    <div class="flex gap-4 mb-10 text-[10px] font-bold uppercase opacity-50">
-                        <span>${p.author}</span> • <span>${p.date}</span>
+                    <h1 class="text-4xl font-black mb-4 italic">${p.title}</h1>
+                    <div class="flex gap-4 mb-8 text-[10px] font-bold uppercase opacity-50">
+                        <span class="author-badge">${p.author}</span> <span>${p.date}</span>
                     </div>
-                    <div class="text-slate-200 text-xl leading-relaxed white-pre mb-12">${core.parseMd(p.content)}</div>
-                    <div class="space-y-4">${(p.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl shadow-2xl">`).join('')}</div>
+                    <div class="text-slate-200 text-lg leading-relaxed mb-10">${core.parseMd(p.content)}</div>
+                    <div class="space-y-4">${(p.images || []).map(img => `<img src="${img}" class="w-full rounded-2xl shadow-xl">`).join('')}</div>
                 `;
-                core.loadComments(p.id);
                 document.getElementById('like-count').innerText = p.likes || 0;
+                core.loadComments(p.id);
                 window.scrollTo(0,0);
+            },
+
+            addComment: () => {
+                const n = document.getElementById('comm-nick').value;
+                const t = document.getElementById('comm-text').value;
+                if(!n || !t) return alert("Uzupełnij nick i treść!");
+                db.ref(`elk/comments/${currentPostId}`).push({ nick: n, text: t, date: new Date().toLocaleString('pl-PL') }).then(() => {
+                    document.getElementById('comm-text').value = "";
+                });
             },
 
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list');
-                    list.innerHTML = `<h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>`;
+                    list.innerHTML = `<h3 class="font-black uppercase italic mb-6">Komentarze</h3>`;
                     if(!snap.val()) return;
-                    Object.entries(snap.val()).forEach(([cid, c]) => {
-                        let html = `
-                        <div class="comment-item">
-                            <div class="flex justify-between items-start">
-                                <span class="font-black text-blue-500 text-xs uppercase">${c.nick}</span>
-                                <div class="flex gap-4 text-[9px] font-bold opacity-30">
-                                    <button onclick="core.setReply('${cid}', '${c.nick}')">ODPOWIEDZ</button>
-                                    <button onclick="core.reportComment('${pid}', '${cid}')" class="text-red-500">ZGŁOŚ</button>
-                                </div>
-                            </div>
-                            <p class="text-sm mt-1 opacity-90">${c.text}</p>
-                            <div class="text-[8px] opacity-20 mt-2">${c.date}</div>`;
-                        
-                        if(c.replies) {
-                            html += `<div class="ml-6 mt-4 space-y-3 border-l border-white/5 pl-4">`;
-                            Object.values(c.replies).forEach(r => {
-                                html += `<div class="opacity-80"><span class="text-[10px] font-bold text-blue-400">${r.nick}:</span> <span class="text-xs">${r.text}</span></div>`;
-                            });
-                            html += `</div>`;
-                        }
-                        html += `</div>`;
-                        list.innerHTML += html;
+                    Object.values(snap.val()).reverse().forEach(c => {
+                        list.innerHTML += `<div class="comment-item"><span class="font-black text-blue-400 text-xs">${c.nick}</span><p class="text-sm mt-1">${c.text}</p><div class="text-[8px] opacity-20 mt-2">${c.date}</div></div>`;
                     });
                 });
+            },
+
+            likePost: () => {
+                db.ref(`elk/posts/${currentPostId}/likes`).transaction(l => (l || 0) + 1);
             }
         };
 
-        // Auth Listener
         auth.onAuthStateChanged(user => {
             const isAdm = !!user;
             document.getElementById('admin-indicator').classList.toggle('hidden', !isAdm);
-            document.getElementById('btn-login-trigger').classList.toggle('hidden', isAdm);
             document.getElementById('btn-logout').classList.toggle('hidden', !isAdm);
+            document.getElementById('btn-login-trigger').classList.toggle('hidden', isAdm);
             if(isAdm) {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('view-home').classList.add('hidden');
@@ -393,35 +289,17 @@
             }
         });
 
-        // Dane
-        postsRef = db.ref('elk/posts');
-        postsRef.on('value', snap => {
+        db.ref('elk/posts').on('value', snap => {
             allPosts = [];
-            const list = document.getElementById('admin-posts-list');
-            list.innerHTML = "";
+            const admList = document.getElementById('admin-posts-list'); admList.innerHTML = "";
             if(snap.val()) {
                 Object.entries(snap.val()).reverse().forEach(([id, v]) => {
                     allPosts.push({id, ...v});
-                    list.innerHTML += `<div class="flex justify-between p-2 bg-white/5 rounded-lg text-[10px]"><span>${v.title}</span><button onclick="core.editPost('${id}')" class="text-blue-500">EDYTUJ</button></div>`;
+                    admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded text-[10px]"><span>${v.title}</span><button onclick="db.ref('elk/posts/${id}').remove()" class="text-red-500">USUŃ</button></div>`;
                 });
             }
             core.render(allPosts);
         });
-
-        // Zgłoszenia
-        db.ref('elk/reports').on('value', snap => {
-            const count = snap.val() ? Object.keys(snap.val()).length : 0;
-            document.getElementById('rep-badge').innerText = count;
-            document.getElementById('rep-badge').classList.toggle('hidden', count === 0);
-            const container = document.getElementById('admin-reports');
-            container.innerHTML = `<h2 class="text-xl font-black mb-6 uppercase italic text-red-500">Zgłoszone komentarze</h2>`;
-            if(snap.val()) {
-                Object.entries(snap.val()).forEach(([rid, r]) => {
-                    container.innerHTML += `<div class="glass p-4 rounded-xl flex justify-between items-center text-xs"><span>ID Posta: ${r.postId}</span><button onclick="db.ref('elk/reports/${rid}').remove()" class="text-green-500 font-bold">USUŃ ZGŁOSZENIE</button></div>`;
-                });
-            }
-        });
-
     </script>
 </body>
 </html>
