@@ -48,7 +48,7 @@
     </div>
 
     <div class="marquee" id="marquee-container" style="background: var(--urgent);">
-        <div class="marquee-content" id="breaking-news">Wczytywanie informacji z Ełku...</div>
+        <div class="marquee-content" id="breaking-news">Wczytywanie najświeższych informacji z regionu...</div>
     </div>
 
     <header class="sticky top-0 z-50 glass">
@@ -68,7 +68,7 @@
 
     <main class="max-w-6xl mx-auto px-4 mt-8">
         <div id="search-area" class="mb-10 space-y-6">
-            <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj newsa z Ełku..." class="input-dark">
+            <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Czego szukasz w Ełku?" class="input-dark">
             <div class="flex flex-wrap gap-2">
                 <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
                 <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
@@ -79,11 +79,11 @@
 
         <div id="view-home" class="pb-20">
             <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            <button id="load-more" onclick="core.loadAll()" class="w-full mt-10 p-4 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-white/5 transition">Pokaż starsze posty</button>
+            <button id="load-more" onclick="core.loadAll()" class="w-full mt-10 p-4 border border-white/10 rounded-2xl text-xs font-black uppercase hover:bg-white/5 transition">Archiwum wiadomości</button>
         </div>
 
         <div id="view-article" class="hidden pb-20 max-w-3xl mx-auto">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-black uppercase text-[10px] flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-chevron-left"></i> Powrót</button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-black uppercase text-[10px] flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-chevron-left"></i> Powrót do listy</button>
             <div id="article-content"></div>
             
             <div class="mt-12 pt-10 border-t border-white/10">
@@ -93,8 +93,8 @@
                 <div id="comments-list" class="space-y-4"></div>
                 <div class="mt-10 space-y-3 bg-white/5 p-6 rounded-3xl">
                     <input type="text" id="comm-nick" placeholder="Twój nick" class="input-dark text-sm">
-                    <textarea id="comm-text" rows="2" placeholder="Skomentuj..." class="input-dark text-sm"></textarea>
-                    <button onclick="core.addComment()" class="w-full bg-blue-600 p-3 rounded-xl font-black uppercase text-xs">Dodaj</button>
+                    <textarea id="comm-text" rows="2" placeholder="Napisz komentarz..." class="input-dark text-sm"></textarea>
+                    <button onclick="core.addComment()" class="w-full bg-blue-600 p-3 rounded-xl font-black uppercase text-xs">Wyślij komentarz</button>
                 </div>
             </div>
         </div>
@@ -104,29 +104,29 @@
                 <h2 id="admin-form-title" class="text-2xl font-black mb-6 uppercase text-blue-500 italic">Panel Redaktora</h2>
                 <div class="space-y-4">
                     <input type="hidden" id="edit-id">
-                    <input type="text" id="in-title" placeholder="Tytuł" class="input-dark">
+                    <input type="text" id="in-title" placeholder="Tytuł wiadomości" class="input-dark">
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="in-author" placeholder="Autor" class="input-dark">
+                        <input type="text" id="in-author" placeholder="Autor / Redakcja" class="input-dark">
                         <select id="in-category" class="input-dark">
                             <option value="Wydarzenia">Wydarzenia</option>
                             <option value="Informacje">Informacje</option>
                             <option value="Aktualizacje">Aktualizacje</option>
                         </select>
                     </div>
-                    <textarea id="in-content" rows="8" placeholder="Treść (# Nagłówek, **Pogrubienie**)" class="input-dark"></textarea>
+                    <textarea id="in-content" rows="8" placeholder="Treść newsa... (# Nagłówek, **Pogrubienie**, [Link](url))" class="input-dark"></textarea>
                     
-                    <label class="flex items-center gap-3 bg-white/5 p-4 rounded-xl cursor-pointer">
+                    <label class="flex items-center gap-3 bg-white/5 p-4 rounded-xl cursor-pointer border border-white/5">
                         <input type="checkbox" id="in-urgent" class="w-5 h-5 accent-red-600">
                         <span class="text-xs font-black uppercase text-red-500">Oznacz jako wiadomość PILNĄ</span>
                     </label>
 
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black opacity-40 uppercase">Zdjęcia posta:</label>
+                        <label class="text-[10px] font-black opacity-40 uppercase">Zarządzaj zdjęciami:</label>
                         <div id="preview-images" class="flex flex-wrap gap-4 mb-4"></div>
                         <input type="file" id="in-files" multiple class="text-xs" onchange="core.handleFileSelect()">
                     </div>
 
-                    <button id="btn-publish" onclick="core.publish()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest">Opublikuj wiadomość</button>
+                    <button id="btn-publish" onclick="core.publish()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest">Opublikuj na portalu</button>
                     <button id="btn-cancel-edit" onclick="core.resetAdminForm()" class="hidden w-full text-[10px] font-black uppercase opacity-40 mt-2">Anuluj edycję</button>
                     
                     <div id="admin-posts-list" class="mt-10 space-y-2 border-t border-white/5 pt-6"></div>
@@ -137,10 +137,10 @@
 
     <div id="login-modal" class="fixed inset-0 bg-black/95 z-[1000] hidden items-center justify-center p-6">
         <div class="bg-[#161c2d] p-10 rounded-3xl w-full max-w-sm border border-white/10 text-center">
-            <h2 class="text-2xl font-black mb-6 uppercase italic">Redakcja</h2>
-            <input type="password" id="admin-key-input" placeholder="Wpisz kod..." class="input-dark text-center mb-6">
-            <button onclick="core.checkAdminKey()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase">Wejdź</button>
-            <button onclick="core.closeLogin()" class="mt-4 text-[10px] font-black uppercase opacity-30">Zamknij</button>
+            <h2 class="text-2xl font-black mb-6 uppercase italic">Autoryzacja</h2>
+            <input type="password" id="admin-key-input" placeholder="Kod dostępu" class="input-dark text-center mb-6">
+            <button onclick="core.checkAdminKey()" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase">Zaloguj</button>
+            <button onclick="core.closeLogin()" class="mt-4 text-[10px] font-black uppercase opacity-30">Powrót</button>
         </div>
     </div>
 
@@ -155,24 +155,21 @@
         let allPosts = [];
         let currentPostId = null;
         let currentTab = 'all';
-        let existingImages = []; // Przechowuje URL zdjęć już będących w bazie przy edycji
+        let existingImages = []; 
 
         window.core = {
             getWeather: async () => {
                 try {
                     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.82&longitude=22.36&current_weather=true');
                     const d = await r.json();
-                    document.getElementById('weather-temp').innerText = `${Math.round(d.current_weather.temperature)}°C Ełk`;
+                    document.getElementById('weather-temp').innerText = `${Math.round(d.current_weather.temperature)}°C w Ełku`;
                     document.getElementById('weather').classList.remove('hidden');
                 } catch(e) {}
             },
 
-            // Obsługa podglądu zdjęć (zarówno tych z bazy, jak i nowych)
             renderPreviews: () => {
                 const container = document.getElementById('preview-images');
                 container.innerHTML = "";
-
-                // Najpierw renderuj zdjęcia które już są w bazie (przy edycji)
                 existingImages.forEach((url, index) => {
                     const wrapper = document.createElement('div');
                     wrapper.className = "preview-wrapper";
@@ -185,9 +182,7 @@
             },
 
             handleFileSelect: () => {
-                // Ta funkcja tylko odświeża listę plików do wysłania w przeglądarce
-                // Przeglądarka sama pokazuje nazwy przy input file, a my skupiamy się na zarządzaniu istniejącymi
-                console.log("Wybrano nowe pliki do dodania");
+                console.log("Pliki wybrane do wysłania");
             },
 
             removeExistingImg: (index) => {
@@ -217,7 +212,7 @@
                 if(document.getElementById('admin-key-input').value === MY_SECRET_KEY) {
                     localStorage.setItem('is_editor', 'true');
                     location.reload();
-                } else alert("Zły kod!");
+                } else alert("Dostęp zabroniony!");
             },
             logout: () => { localStorage.removeItem('is_editor'); location.reload(); },
 
@@ -243,14 +238,15 @@
                     titles = allPosts.filter(p => p.category === currentTab).map(p => p.title);
                     container.style.background = "var(--main)";
                 }
-                marquee.innerText = titles.length > 0 ? ` +++ ${label}: ${titles.join(` +++ ${label}: `)} +++ ` : `Brak nowych wiadomości w sekcji ${label}`;
+                marquee.innerText = titles.length > 0 ? ` +++ ${label}: ${titles.join(` +++ ${label}: `)} +++ ` : `Dzień dobry Ełk! Zapraszamy do czytania.`;
             },
 
             publish: async () => {
                 const editId = document.getElementById('edit-id').value;
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
-                if(!t || !c) return alert("Uzupełnij tytuł i treść!");
+                
+                if(!t || !c) return alert("Uzupełnij wymagane pola!");
 
                 document.getElementById('loader').style.display = 'flex';
                 
@@ -258,16 +254,17 @@
                 const files = document.getElementById('in-files').files;
 
                 try {
-                    // Upload nowych zdjęć
-                    if(files.length > 0) {
+                    if(files && files.length > 0) {
                         for(let f of files) {
-                            const fd = new FormData(); fd.append("image", f);
-                            const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-                            const d = await r.json(); if(d.success) newUrls.push(d.data.url);
+                            try {
+                                const fd = new FormData(); fd.append("image", f);
+                                const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
+                                const d = await r.json(); 
+                                if(d.success) newUrls.push(d.data.url);
+                            } catch(err) { console.warn("Błąd uploadu obrazka"); }
                         }
                     }
 
-                    // Łączymy stare zachowane zdjęcia z nowymi wgranymi
                     const finalImages = [...existingImages, ...newUrls];
 
                     const postData = {
@@ -284,7 +281,8 @@
                     await ref.update(postData);
                     location.reload();
                 } catch(e) {
-                    alert("Błąd połączenia. Spróbuj ponownie.");
+                    console.error(e);
+                    alert("Wystąpił błąd zapisu.");
                     document.getElementById('loader').style.display = 'none';
                 }
             },
@@ -298,12 +296,11 @@
                 document.getElementById('in-category').value = p.category;
                 document.getElementById('in-urgent').checked = p.isUrgent || false;
                 
-                // Załaduj istniejące zdjęcia do zarządzania
                 existingImages = p.images ? [...p.images] : [];
                 core.renderPreviews();
 
-                document.getElementById('admin-form-title').innerText = "Edytuj Post";
-                document.getElementById('btn-publish').innerText = "Zatwierdź Zmiany";
+                document.getElementById('admin-form-title').innerText = "Edycja Wiadomości";
+                document.getElementById('btn-publish').innerText = "Zapisz Zmiany";
                 document.getElementById('btn-cancel-edit').classList.remove('hidden');
                 window.scrollTo(0,0);
             },
@@ -332,7 +329,8 @@
                             <span class="text-[9px] font-black uppercase text-blue-500 mb-2 block">${p.category}</span>
                             <h2 class="text-lg font-bold leading-tight mb-4">${p.title}</h2>
                             <div class="mt-auto flex justify-between opacity-30 text-[9px] font-black uppercase">
-                                <span>${p.author}</span><span>${p.date.split(',')[0]}</span>
+                                <span><i class="fa-solid fa-user text-[8px] mr-1"></i> ${p.author}</span>
+                                <span>${p.date.split(',')[0]}</span>
                             </div>
                         </div>`;
                     card.onclick = () => core.showFull(p);
@@ -347,7 +345,7 @@
                 document.getElementById('view-article').classList.remove('hidden');
                 document.getElementById('article-content').innerHTML = `
                     <h1 class="text-3xl font-black mb-4 italic leading-tight">${p.title}</h1>
-                    <p class="text-[10px] opacity-40 font-bold mb-8 uppercase">${p.author} • ${p.date}</p>
+                    <p class="text-[10px] opacity-40 font-bold mb-8 uppercase">Redaktor: ${p.author} | Data: ${p.date}</p>
                     <div class="text-slate-200 text-lg leading-relaxed mb-10">${core.parseMd(p.content)}</div>
                     <div class="grid gap-4">${(p.images || []).map(img => `<img src="${img}" class="w-full rounded-3xl shadow-xl">`).join('')}</div>
                 `;
@@ -359,10 +357,10 @@
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list');
-                    list.innerHTML = `<h3 class="font-black uppercase text-xs opacity-40 mb-4">Dyskusja</h3>`;
+                    list.innerHTML = `<h3 class="font-black uppercase text-xs opacity-40 mb-4 tracking-widest italic">Wasze opinie</h3>`;
                     if(!snap.val()) return;
                     Object.values(snap.val()).reverse().forEach(c => {
-                        list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl text-sm border border-white/5"><span class="font-black text-blue-400 text-[10px] uppercase">${c.nick}</span><p class="mt-1 opacity-80">${c.text}</p></div>`;
+                        list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl text-sm border border-white/5 mb-3"><span class="font-black text-blue-400 text-[10px] uppercase">${c.nick}</span><p class="mt-1 opacity-80">${c.text}</p></div>`;
                     });
                 });
             },
@@ -393,10 +391,10 @@
                 Object.entries(snap.val()).reverse().forEach(([id, v]) => {
                     allPosts.push({id, ...v});
                     if(admList) {
-                        admList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl mb-2 text-[10px] font-bold">
+                        admList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl mb-2 text-[10px] font-bold border border-white/5">
                             <span class="truncate mr-4 uppercase">${v.title}</span>
-                            <div class="flex gap-3"><button onclick="core.editPost('${id}')" class="text-blue-500 uppercase">Edytuj</button>
-                            <button onclick="confirm('Usuwamy?') && db.ref('elk/posts/${id}').remove()" class="text-red-500 uppercase">Usuń</button></div>
+                            <div class="flex gap-3"><button onclick="core.editPost('${id}')" class="text-blue-500 uppercase hover:underline">Edytuj</button>
+                            <button onclick="confirm('Czy usunąć ten artykuł?') && db.ref('elk/posts/${id}').remove()" class="text-red-500 uppercase hover:underline">Usuń</button></div>
                         </div>`;
                     }
                 });
