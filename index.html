@@ -74,8 +74,9 @@
     <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
         <h1 class="text-4xl font-black italic mb-2 uppercase text-white">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
         <p class="text-slate-400 mb-8 text-sm">Zaloguj się kontem Google, aby przeglądać i komentować.</p>
-        <button onclick="core.login()" class="bg-white text-black px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-blue-500 hover:text-white transition shadow-xl">
-            <i class="fa-brands fa-google"></i> Zaloguj przez Google
+       <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-[#4752C4] transition shadow-xl">
+    <i class="fa-brands fa-discord text-xl"></i> Zaloguj przez Discord
+</button>
         </button>
     </div>
 
@@ -308,6 +309,32 @@
         let currentNick = "Użytkownik Discorda"; 
         let appInitialized = false;
 
+        // ======= OSTATECZNA KONFIGURACJA DISCORD + FIREBASE =======
+        const firebaseConfig = {
+            apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
+            authDomain: "mzk-by-facio.firebaseapp.com",
+            databaseURL: "https://mzk-by-facio-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "mzk-by-facio",
+            storageBucket: "mzk-by-facio.firebasestorage.app",
+            messagingSenderId: "676970411647",
+            appId: "1:676970411647:web:26137e7242c0db7c83714a",
+            measurementId: "G-EE72F501ZR"
+        };
+
+        // TUTAJ WKLEJ SWOJE NOWE UID (ZOBACZYSZ JE W KONSOLI F12 PO ZALOGOWANIU)
+        const ADMIN_UID = "discord:TWÓJ_NUMER_ID_Z_KONSOLI"; 
+        const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
+
+        // TWÓJ WYGENEROWANY LINK DISCORD
+        const DISCORD_LOGIN_URL = "https://discord.com/oauth2/authorize?client_id=1498418325502558328&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        
+        let currentNick = "Użytkownik Discorda"; 
+        let appInitialized = false;
+
         window.core = {
             login: () => {
                 console.log("[LOGOWANIE] Przekierowanie do Discord...");
@@ -378,7 +405,6 @@
                     appInitialized = true;
                 }
             },
-            
         
         // ZMIENNA PRZECHOWUJĄCA ZAPISANY NICK
         let currentNick = "Użytkownik"; 
