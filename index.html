@@ -28,6 +28,7 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
+        .like-btn { cursor: pointer; }
         .like-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
         .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; cursor: pointer; text-transform: uppercase; }
@@ -49,13 +50,16 @@
         .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
         @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
         footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
+        
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body id="main-body">
 
-    <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
+    <div id="auth-overlay" class="hidden fixed inset-0 bg-[#0b0f1a]/95 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-center p-6 transition-opacity">
+        <button onclick="core.hideLoginOverlay()" class="absolute top-8 right-8 text-slate-400 hover:text-white text-3xl"><i class="fa-solid fa-xmark"></i></button>
         <h1 class="text-4xl font-black italic mb-2 uppercase text-white">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
-        <p class="text-slate-400 mb-8 text-sm">Zaloguj się przez Discord, aby przeglądać portal.</p>
+        <p class="text-slate-400 mb-8 text-sm">Musisz się zalogować przez Discord, aby dodać komentarz lub polubienie.</p>
         <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:scale-105 transition shadow-2xl">
             <i class="fa-brands fa-discord"></i> Zaloguj przez Discord
         </button>
@@ -66,7 +70,7 @@
     <div class="ad-container ad-right" id="ad-r-zone"></div>
     <div id="loader"><div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div></div>
 
-    <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8 hidden" id="main-header">
+    <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8" id="main-header">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
             <div class="flex items-center gap-4">
@@ -85,7 +89,8 @@
                 </div>
 
                 <div class="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
-                    <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
+                    <button id="btn-login" onclick="core.showLoginOverlay()" class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-400 transition hidden">Zaloguj</button>
+                    <button id="btn-logout" onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition hidden">Wyloguj</button>
                     <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
                     <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">Panel</button>
                 </div>
@@ -93,7 +98,7 @@
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 min-h-screen hidden" id="main-content">
+    <main class="max-w-5xl mx-auto px-4 min-h-screen" id="main-content">
         <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
@@ -121,7 +126,7 @@
             <div id="article-content"></div>
             <div id="article-interaction" class="mt-12 pt-12 border-t border-white/10">
                 <div class="flex items-center gap-6 mb-10">
-                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition">
+                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105">
                         <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
                     </div>
                 </div>
@@ -130,9 +135,9 @@
                 <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
                     <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
                         <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
-                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
+                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase hover:text-red-400">Anuluj</button>
                     </div>
-                    <input type="text" id="comm-nick" readonly class="input-dark opacity-60" placeholder="Twój nick">
+                    <input type="text" id="comm-nick" readonly class="input-dark opacity-60" placeholder="Zaloguj się, aby komentować" value="Użytkownik">
                     <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
                     <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
                 </div>
@@ -160,7 +165,7 @@
                     </div>
                     <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
                     <div class="p-4 bg-white/5 rounded-xl border border-white/10"><input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3"><div id="edit-images-preview" class="flex flex-wrap gap-2"></div></div>
-                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
+                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition">Opublikuj</button>
                     <div id="admin-list" class="mt-10 space-y-2"></div>
                 </div>
             </div>
@@ -172,7 +177,7 @@
                     <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
                     <input type="file" id="ad-file" accept="image/*" class="text-xs">
                     <input type="text" id="ad-target" placeholder="Link (URL)" class="input-dark text-sm">
-                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase">Zapisz Reklamę</button>
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase hover:bg-blue-500 transition">Zapisz Reklamę</button>
                 </div>
                 <div id="admin-ads-list" class="space-y-3"></div>
             </div>
@@ -183,13 +188,13 @@
                     <div>Redakcja:<textarea id="set-redaction" rows="3" class="input-dark mt-2"></textarea></div>
                     <div>Prywatność:<textarea id="set-privacy" rows="3" class="input-dark mt-2"></textarea></div>
                     <div>Współpraca:<textarea id="set-coop" rows="3" class="input-dark mt-2"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white">Zapisz w Firebase</button>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white hover:bg-blue-500 transition">Zapisz w Firebase</button>
                 </div>
             </div>
         </div>
 
         <div id="view-legal" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 uppercase text-xs"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 uppercase text-xs hover:text-white transition"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
             <div class="glass p-10 rounded-[40px] border border-blue-500/10">
                 <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500"></h2>
                 <div id="legal-body" class="text-slate-300 leading-relaxed white-pre text-lg"></div>
@@ -197,7 +202,7 @@
         </div>
     </main>
 
-    <footer id="main-footer" class="max-w-full hidden border-t border-white/5 py-10 mt-10">
+    <footer id="main-footer" class="max-w-full border-t border-white/5 py-10 mt-10">
         <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-4 text-sm">
             <div><h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4><p id="txt-about" class="text-slate-400"></p></div>
             <div><h4 class="font-black uppercase mb-4 text-slate-300">Informacje</h4>
@@ -210,8 +215,8 @@
             </div>
             <div><h4 class="font-black uppercase mb-4">Linki</h4>
                 <div class="flex gap-4 text-slate-400 text-xl">
-                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-pink-500"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-500"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-pink-500 transition"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-500 transition"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
         </div>
@@ -229,9 +234,8 @@
             appId: "1:676970411647:web:26137e7242c0db7c83714a"
         };
 
-        const ADMIN_NICK = "Facio"; // TWOJA ZMIANA: ADMIN PO NICKU FACIO
+        const ADMIN_NICK = "Facio";
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
-        // NAPRAWIONE CLIENT ID:
         const DISCORD_CLIENT_ID = "1498418325502558328";
 
         firebase.initializeApp(firebaseConfig);
@@ -260,6 +264,14 @@
                 auth.signOut().then(() => location.reload());
             },
 
+            showLoginOverlay: () => {
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            },
+
+            hideLoginOverlay: () => {
+                document.getElementById('auth-overlay').classList.add('hidden');
+            },
+
             checkAuth: () => {
                 const params = new URLSearchParams(window.location.search);
                 const token = params.get('token');
@@ -274,26 +286,27 @@
                 const savedToken = localStorage.getItem('fb_token');
                 const savedNick = localStorage.getItem('user_nick');
 
+                // Inicjalizacja danych uruchamia się natychmiast, nawet dla niezalogowanych
+                if (!appInitialized) { core.initApp(); appInitialized = true; }
+
                 auth.onAuthStateChanged(user => {
                     if (user) {
                         document.getElementById('auth-overlay').classList.add('hidden');
-                        document.getElementById('main-header').classList.remove('hidden');
-                        document.getElementById('main-content').classList.remove('hidden');
-                        document.getElementById('main-footer').classList.remove('hidden');
+                        document.getElementById('btn-login').classList.add('hidden');
+                        document.getElementById('btn-logout').classList.remove('hidden');
                         document.getElementById('comm-nick').value = savedNick || "Użytkownik";
 
-                        // Weryfikacja Admina (Nick bez względu na wielkość liter)
                         if(savedNick && savedNick.toLowerCase() === ADMIN_NICK.toLowerCase()) {
                             document.getElementById('admin-indicator').classList.remove('hidden');
                             document.getElementById('btn-open-admin').classList.remove('hidden');
                             document.getElementById('main-body').classList.add('admin-active');
                         }
-
-                        if (!appInitialized) { core.initApp(); appInitialized = true; }
                     } else if (savedToken) {
                         auth.signInWithCustomToken(savedToken).catch(() => core.logout());
                     } else {
-                        document.getElementById('auth-overlay').classList.remove('hidden');
+                        document.getElementById('btn-login').classList.remove('hidden');
+                        document.getElementById('btn-logout').classList.add('hidden');
+                        document.getElementById('comm-nick').value = "Użytkownik"; // Domyślna wartość dla niezalogowanego (nie użyta bez autoryzacji)
                     }
                 });
             },
@@ -305,7 +318,7 @@
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl text-[10px]"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500">USUŃ</button></div></div>`;
+                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl text-[10px]"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 hover:text-amber-400">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500 hover:text-red-400">USUŃ</button></div></div>`;
                         });
                     }
                     core.filterPosts();
@@ -347,7 +360,6 @@
                 setInterval(core.rotateAds, 5000);
             },
 
-            // POWIADOMIENIA I SYSTEM TOASTÓW
             toggleNotifMenu: () => document.getElementById('notif-dropdown').classList.toggle('hidden'),
             loadNotifications: () => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
@@ -392,7 +404,6 @@
                 core.loadNotifications();
             },
 
-            // FUNKCJE RENDEROWANIA I MARKDOWN
             parseMarkdown: (text) => {
                 if(!text) return "";
                 let html = DOMPurify.sanitize(text);
@@ -433,12 +444,11 @@
                 document.getElementById('view-article').classList.remove('hidden');
                 document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10 leading-relaxed">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl shadow-2xl">`).join('')}</div>`;
                 const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition ${isLiked}`;
+                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition hover:scale-105 ${isLiked}`;
                 document.getElementById('like-count').innerText = data.likes || 0;
                 window.scrollTo(0,0);
             },
 
-            // ADMIN I ZAKŁADKI
             openAdmin: () => {
                 if(localStorage.getItem('user_nick')?.toLowerCase() !== ADMIN_NICK.toLowerCase()) return alert("Błąd uprawnień!");
                 ['view-home', 'search-area', 'view-article', 'view-legal'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -480,7 +490,6 @@
             },
             cancelEdit: () => { editId = null; currentEditImages = []; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = ""; document.getElementById('admin-mode-title').innerText = "NOWY WPIS"; document.getElementById('cancel-edit-btn').classList.add('hidden'); document.getElementById('edit-images-preview').innerHTML = ""; },
 
-            // REKLAMY
             publishAd: async () => {
                 const side = document.getElementById('ad-side').value;
                 const file = document.getElementById('ad-file').files[0];
@@ -504,7 +513,6 @@
                 });
             },
 
-            // KOMENTARZE I RESZTA
             loadComments: (pid) => {
                 db.ref(`elk/comments/${pid}`).on('value', snap => {
                     const list = document.getElementById('comments-list'); list.innerHTML = "";
@@ -520,35 +528,44 @@
                             <span class="font-black text-blue-400 text-xs uppercase">${c.nick}</span>
                             <p class="text-sm my-1">${DOMPurify.sanitize(c.text)}</p>
                             <div class="flex gap-4 mt-2">
-                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span>
-                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>
+                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-blue-400 uppercase">Odpowiedz</span>
+                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="text-[10px] font-bold text-slate-400 cursor-pointer hover:text-red-400 uppercase">Zgłoś</span>
                             </div>
                             <div class="replies-container" style="display:block">${reps}</div>
                         </div>`;
                     });
                 });
             },
+            
+            // Weryfikacja zalogowania przed skomentowaniem
             addComment: () => {
-                const n = document.getElementById('comm-nick').value;
+                if (!auth.currentUser) return core.showLoginOverlay();
+                
+                const n = document.getElementById('comm-nick').value || localStorage.getItem('user_nick');
                 const t = document.getElementById('comm-text').value;
                 if(!t) return;
                 const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString() };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
             },
-            reportComment: (cid, text, nick) => confirm("Zgłosić?") && reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() }),
+            
+            // Weryfikacja zalogowania przed zgłoszeniem
+            reportComment: (cid, text, nick) => {
+                if (!auth.currentUser) return core.showLoginOverlay();
+                confirm("Zgłosić ten komentarz do sprawdzenia?") && reportsRef.push({ postId: currentOpenPostId, commentId: cid, text, nick, ts: Date.now() });
+            },
+
             loadReports: () => {
                 reportsRef.on('value', snap => {
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold uppercase">${r.nick}:</p><p class="text-xs italic my-1">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">USUŃ RAPORT</button></div>`;
+                        container.innerHTML += `<div class="notif-card report-highlight p-4 bg-white/5 border-l-4 border-red-500 rounded-lg"><p class="text-[10px] text-red-500 font-bold uppercase">${r.nick}:</p><p class="text-xs italic my-1">"${r.text}"</p><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold hover:bg-slate-600 transition">USUŃ RAPORT</button></div>`;
                     });
                 });
             },
             dismissReport: (rid) => reportsRef.child(rid).remove(),
 
-            // USTAWIENIA
             saveSettings: () => settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value }).then(() => alert("Zapisano!")),
             loadSettingsInAdmin: () => settingsRef.once('value', s => {
                 const d = s.val(); if(!d) return;
@@ -558,7 +575,6 @@
                 document.getElementById('set-coop').value = d.coop || "";
             }),
 
-            // SYSTEMOWE
             goHome: () => {
                 ['view-home', 'search-area', 'main-header', 'main-footer', 'main-content'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
                 ['view-article', 'view-admin', 'view-legal', 'auth-overlay'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
@@ -575,12 +591,21 @@
             previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
             renderEditImages: (files = []) => {
                 const cont = document.getElementById('edit-images-preview'); cont.innerHTML = "";
-                currentEditImages.forEach(url => cont.innerHTML += `<div class="preview-wrapper"><img src="${url}"></div>`);
+                currentEditImages.forEach(url => cont.innerHTML += `<div class="preview-wrapper"><img src="${url}" class="w-16 h-16 object-cover rounded-lg"></div>`);
             },
+
+            // Weryfikacja zalogowania przed polubieniem
             likePost: () => {
+                if (!auth.currentUser) return core.showLoginOverlay();
+                
                 if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
                 postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1);
                 localStorage.setItem(`liked_${currentOpenPostId}`, "1");
+                
+                // Wizualna aktualizacja liczników
+                document.getElementById('main-like-btn').classList.add('liked');
+                let countElem = document.getElementById('like-count');
+                countElem.innerText = parseInt(countElem.innerText) + 1;
             }
         };
 
