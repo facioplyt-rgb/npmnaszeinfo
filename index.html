@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ełk Nasze Wiadomości - MZK by Facio</title>
+    <title>Ełk Nasze Wiadomości</title>
     
-    <!-- BIBLIOTEKI -->
+    <!-- STYLE I CZCIONKI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    
+    <!-- BIBLIOTEKI FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+
+    <!-- ZABEZPIECZENIE PRZED XSS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
@@ -28,27 +32,44 @@
         .author-badge { font-weight: 900; color: #3b82f6; padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: 9999px; font-size: 10px; }
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
         .like-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 15px; border-radius: 0 12px 12px 0; margin-bottom: 15px; position: relative; }
-        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; cursor: pointer; }
+        .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
+        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; cursor: pointer; text-transform: uppercase; }
         body.admin-active .del-comm-btn { display: block; }
         .ad-box { width: 100%; height: 500px; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; transition: 0.5s ease; }
         .ad-box.active { display: block; animation: fadeIn 0.5s; }
         .ad-box img { width: 100%; height: 100%; object-fit: cover; }
         .toast { position: fixed; top: 80px; right: 20px; background: #1e293b; border-left: 4px solid var(--main); color: white; padding: 15px 25px; border-radius: 8px; transform: translateX(120%); transition: 0.5s; z-index: 1000; font-weight: 700; font-size: 12px; }
         .toast.show { transform: translateX(0); }
-        .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; }
-        .ad-left { left: 10px; } .ad-right { right: 10px; }
-        .md-h1 { font-size: 2rem; font-weight: 900; display: block; margin: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        .md-small { font-size: 0.8rem; opacity: 0.6; display: block; }
-        .tab-btn { padding: 10px 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
-        .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; display: block; }
+        .ad-left { left: 10px; }
+        .ad-right { right: 10px; }
+        .no-ad-placeholder { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.2); text-transform: uppercase; border: 2px dashed rgba(255,255,255,0.05); padding: 20px 10px; text-align: center; border-radius: 12px; }
+        .report-btn { font-size: 9px; font-weight: 900; color: #ef4444; text-transform: uppercase; cursor: pointer; opacity: 0.6; margin-left: auto; }
+        .report-btn:hover { opacity: 1; }
+        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; cursor: pointer; opacity: 0.6; }
+        .reply-btn:hover { opacity: 1; }
+        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
+        .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
+        .toggle-replies { font-size: 9px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: inline-block; }
+        .toggle-replies:hover { color: white; }
+        .notif-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50px; margin-left: 5px; font-weight: 900; }
+        .notif-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+        .report-highlight { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
         .preview-wrapper { position: relative; width: 60px; height: 60px; }
         .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
         .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
-        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; cursor: pointer; }
-        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .reply-item { background: rgba(255,255,255,0.01); padding: 10px; border-radius: 10px; margin-top: 5px; border-left: 2px solid #3b82f6; }
-        @media (max-width: 1279px) { .ad-container { position: static; width: 100%; margin: 10px 0; } .ad-box { height: 150px; } }
+        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
+        .md-small { font-size: 0.85rem; opacity: 0.7; display: block; line-height: 1.4; color: #94a3b8; }
+        .md-u { text-decoration: underline; text-underline-offset: 3px; }
+        .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
+        .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
+        @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
+        footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body id="main-body">
@@ -56,9 +77,9 @@
     <!-- EKRAN LOGOWANIA DISCORD -->
     <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
         <h1 class="text-4xl font-black italic mb-2 uppercase text-white">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
-        <p class="text-slate-400 mb-8 text-sm">Autoryzuj się przez Discord, aby przeglądać portal.</p>
-        <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:scale-105 transition shadow-2xl">
-            <i class="fa-brands fa-discord text-xl"></i> Zaloguj przez Discord
+        <p class="text-slate-400 mb-8 text-sm">Zaloguj się kontem Discord, aby przeglądać i komentować.</p>
+        <button onclick="core.login()" class="bg-[#5865F2] text-white px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:scale-105 transition shadow-xl">
+            <i class="fa-brands fa-discord"></i> Zaloguj przez Discord
         </button>
     </div>
 
@@ -73,7 +94,6 @@
             <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
             <div class="flex items-center gap-4">
                 
-                <!-- DZWONEK -->
                 <div class="relative">
                     <div id="notif-bell" onclick="core.toggleNotifMenu()" class="relative cursor-pointer text-slate-400 hover:text-white transition">
                         <i class="fa-solid fa-bell text-lg"></i>
@@ -87,22 +107,21 @@
                     </div>
                 </div>
 
-                <!-- ADMIN & LOGOUT -->
                 <div class="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
-                    <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500">Wyloguj</button>
-                    <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase">Admin</span>
-                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400">Panel</button>
+                    <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
+                    <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
+                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">Panel</button>
                 </div>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 min-h-screen hidden" id="main-content">
-        <!-- SEARCH -->
+        <!-- WYSZUKIWARKA -->
         <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj informacji..." class="input-dark pl-12">
+                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark pl-12">
             </div>
             <div class="flex flex-wrap gap-2 items-center border-b border-white/5 pb-4">
                 <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
@@ -112,151 +131,139 @@
             </div>
         </div>
 
-        <!-- LISTA POSTÓW -->
-        <div id="view-home" class="pb-10">
-            <div id="news-container" class="space-y-4"></div>
+        <!-- LISTA WPISÓW -->
+        <div id="view-home" class="pb-5">
+            <div id="news-container" class="space-y-4">
+                <div class="text-center py-20 text-slate-600 italic tracking-widest uppercase text-xs">Wczytywanie bazy...</div>
+            </div>
             <div id="more-container" class="mt-8 hidden flex justify-center pb-10">
-                <button onclick="core.showAllPosts()" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 rounded-full font-bold text-sm transition uppercase">Pokaż starsze wpisy</button>
+                <button onclick="core.showAllPosts()" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 rounded-full font-bold text-sm transition border border-white/5 uppercase tracking-tighter">Pokaż wszystkie pozostałe</button>
             </div>
         </div>
 
         <!-- WIDOK ARTYKUŁU -->
         <div id="view-article" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Powrót</button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
             <div id="article-content"></div>
             
-            <!-- INTERAKCJE -->
             <div id="article-interaction" class="mt-12 pt-12 border-t border-white/10">
-                <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 w-fit bg-white/5 px-8 py-4 rounded-full border border-white/5 cursor-pointer mb-10 transition">
-                    <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
-                </div>
-
-                <h3 class="text-xl font-black uppercase italic mb-6">Sekcja Komentarzy</h3>
-                <div id="comments-list" class="space-y-4 mb-10"></div>
-                
-                <div class="glass p-8 rounded-[30px] space-y-4 border border-blue-500/20">
-                    <div id="replying-to-info" class="hidden flex justify-between bg-blue-500/10 p-3 rounded-xl border border-blue-500/20">
-                        <span class="text-[10px] font-bold uppercase">Odpowiadasz: <span id="target-nick" class="text-blue-400"></span></span>
-                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">X Anuluj</button>
+                <div class="flex items-center gap-6 mb-10">
+                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition">
+                        <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
                     </div>
-                    <input type="text" id="comm-nick" readonly class="input-dark opacity-50 text-xs" placeholder="Twój Nick">
-                    <textarea id="comm-text" rows="3" placeholder="Dodaj komentarz..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl shadow-blue-500/20">Wyślij wiadomość</button>
+                </div>
+
+                <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
+                <div id="comments-list" class="space-y-4 mb-8"></div>
+                
+                <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
+                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                        <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
+                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
+                    </div>
+                    <input type="text" id="comm-nick" readonly class="input-dark opacity-60" placeholder="Twój nick">
+                    <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
+                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
                 </div>
             </div>
         </div>
 
-        <!-- LEGAL -->
+        <!-- WIDOK LEGALNY -->
         <div id="view-legal" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 uppercase text-xs"><i class="fa-solid fa-arrow-left"></i> Wróć</button>
-            <div class="glass p-10 rounded-[40px] border border-blue-500/10">
-                <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500"></h2>
-                <div id="legal-body" class="text-slate-300 leading-relaxed white-pre"></div>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wróć do strony głównej</button>
+            <div class="glass p-10 rounded-[40px] border border-blue-500/10 shadow-2xl">
+                <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500 tracking-tighter"></h2>
+                <div id="legal-body" class="text-slate-300 leading-relaxed white-pre text-lg"></div>
             </div>
         </div>
 
-        <!-- POTĘŻNY PANEL ADMINA -->
+        <!-- PANEL ADMINA -->
         <div id="view-admin" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 uppercase text-[10px] tracking-widest"><i class="fa-solid fa-house"></i> Strona Główna</button>
+            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 hover:text-white transition uppercase text-[10px] tracking-widest"><i class="fa-solid fa-house"></i> Powrót do strony głównej</button>
 
-            <div class="flex flex-wrap gap-3 mb-8">
+            <div class="flex flex-wrap gap-4 mb-8">
                 <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
-                <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Moderacja</button>
-                <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Raporty <span id="notif-count" class="hidden bg-red-600 px-2 rounded-full ml-1">0</span></button>
+                <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
+                <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden notif-badge">0</span></button>
                 <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
-                <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Chmura</button>
+                <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Ustawienia</button>
             </div>
 
-            <!-- TAB: NOWY WPIS -->
-            <div id="admin-new-section" class="max-w-xl mx-auto glass p-8 rounded-[35px]">
+            <div id="admin-new-section" class="max-w-xl mx-auto glass p-8 rounded-[30px] shadow-2xl">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 id="admin-mode-title" class="font-black uppercase italic">Zarządzanie Treścią</h2>
-                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-[10px] font-black border border-red-500/20 px-3 py-1 rounded-full">ANULUJ</button>
+                    <h2 id="admin-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Nowy Wpis</h2>
+                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
                 </div>
                 <div class="space-y-4">
                     <input type="text" id="in-title" placeholder="Tytuł wiadomości" class="input-dark">
                     <input type="text" id="in-author" placeholder="Autor" class="input-dark">
                     <div class="grid grid-cols-2 gap-4">
-                        <select id="in-category" class="input-dark bg-slate-900"><option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option></select>
-                        <input type="text" id="in-date" placeholder="Data (puste = teraz)" class="input-dark text-xs">
+                        <select id="in-category" class="input-dark bg-slate-900">
+                            <option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option>
+                        </select>
+                        <input type="text" id="in-date" placeholder="Data (puste = dziś)" class="input-dark text-xs">
                     </div>
-                    <textarea id="in-content" rows="10" placeholder="Treść (# Tytuł, **Pogrubienie**, -# Mały tekst)..." class="input-dark"></textarea>
+                    <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
                     
                     <div class="p-4 bg-white/5 rounded-xl border border-white/10">
                         <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3">
                         <div id="edit-images-preview" class="flex flex-wrap gap-2"></div>
                     </div>
-                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-black uppercase tracking-widest">Opublikuj na portalu</button>
-                    <div id="admin-list" class="mt-10 space-y-2 border-t border-white/5 pt-6"></div>
+                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
+                    <div id="admin-list" class="mt-10 space-y-2"></div>
                 </div>
             </div>
 
-            <!-- TAB: MODERACJA KOMENTARZY -->
-            <div id="admin-comms-section" class="hidden max-w-2xl mx-auto space-y-4">
-                <h2 class="font-black uppercase mb-6">Ostatnie komentarze</h2>
-                <div id="all-comms-list"></div>
-            </div>
-
-            <!-- TAB: RAPORTY -->
-            <div id="admin-notifs-section" class="hidden max-w-2xl mx-auto space-y-4">
-                <h2 class="font-black uppercase text-red-500 mb-6">Zgłoszenia od użytkowników</h2>
-                <div id="reports-list"></div>
-            </div>
-
-            <!-- TAB: REKLAMY -->
-            <div id="admin-ads-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[35px] space-y-8">
-                <h2 id="ad-mode-title" class="font-black uppercase italic">System Reklam</h2>
+            <div id="admin-comms-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6">Komentarze i Odpowiedzi</h2><div id="all-comms-list"></div></div>
+            <div id="admin-notifs-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6 text-red-500">Zgłoszenia</h2><div id="reports-list"></div></div>
+            <div id="admin-ads-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="ad-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Zarządzaj Reklamami</h2>
+                    <button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
+                </div>
                 <div class="p-6 border border-white/10 rounded-2xl space-y-4 bg-white/5">
-                    <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewy baner</option><option value="right">Prawy baner</option></select>
+                    <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
                     <input type="file" id="ad-file" accept="image/*" class="text-xs">
-                    <input type="text" id="ad-target" placeholder="Link URL" class="input-dark text-sm">
-                    <button onclick="core.publishAd()" class="bg-blue-600 w-full py-3 rounded-xl font-bold uppercase text-xs">Dodaj reklamę</button>
+                    <input type="text" id="ad-target" placeholder="Link docelowy (URL)" class="input-dark text-sm">
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Zapisz Reklamę</button>
                 </div>
                 <div id="admin-ads-list" class="space-y-3"></div>
             </div>
-
-            <!-- TAB: USTAWIENIA -->
-            <div id="admin-settings-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[35px] space-y-6">
-                <h2 class="font-black uppercase italic">Ustawienia Globalne</h2>
-                <div class="space-y-4 text-xs font-bold uppercase text-blue-400">
-                    <div>Stopka (O Serwisie):<textarea id="set-about" rows="3" class="input-dark mt-2"></textarea></div>
-                    <div>Redakcja:<textarea id="set-redaction" rows="3" class="input-dark mt-2"></textarea></div>
-                    <div>Polityka Prywatności:<textarea id="set-privacy" rows="3" class="input-dark mt-2"></textarea></div>
-                    <div>Współpraca:<textarea id="set-coop" rows="3" class="input-dark mt-2"></textarea></div>
-                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-black text-white mt-4">Zapisz w Chmurze Firebase</button>
+            <div id="admin-settings-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-6">
+                <h2 class="text-xl font-bold italic uppercase tracking-tighter">Ustawienia Serwisu (Chmura)</h2>
+                <div class="space-y-4">
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">O Serwisie (Stopka):</label><textarea id="set-about" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Redakcja:</label><textarea id="set-redaction" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Polityka Prywatności:</label><textarea id="set-privacy" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Współpraca:</label><textarea id="set-coop" rows="3" class="input-dark text-sm"></textarea></div>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-bold uppercase tracking-widest">Zapisz ustawienia w chmurze</button>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer id="main-footer" class="max-w-full hidden border-t border-white/5 mt-20 bg-black/20">
-        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 px-6 py-16 text-sm">
-            <div>
-                <h4 class="font-black uppercase mb-6 text-blue-500">O Portalu</h4>
-                <p id="txt-about" class="text-slate-400 leading-relaxed"></p>
-            </div>
-            <div>
-                <h4 class="font-black uppercase mb-6">Informacje Prawne</h4>
-                <ul class="text-slate-400 space-y-3 font-bold uppercase text-[11px]">
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-blue-400 transition">Redakcja Serwisu</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-blue-400 transition">Polityka Prywatności</a></li>
-                    <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:text-blue-400 transition">Kontakt i Współpraca</a></li>
-                    <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
+    <footer id="main-footer" class="max-w-full hidden border-t border-white/5 mt-10">
+        <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4 py-10">
+            <div><h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4><p id="txt-about" class="text-slate-400 leading-relaxed"></p></div>
+            <div><h4 class="font-black uppercase mb-4">Informacje</h4>
+                <ul class="text-slate-400 space-y-2">
+                    <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-white">Redakcja</a></li>
+                    <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-white">Polityka Prywatności</a></li>
+                    <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:text-white">Współpraca</a></li>
                 </ul>
+                <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
             </div>
-            <div>
-                <h4 class="font-black uppercase mb-6">Social Media</h4>
-                <div class="flex gap-4 text-2xl text-slate-500">
-                    <a href="#" target="_blank" class="hover:text-white transition"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="#" target="_blank" class="hover:text-red-500 transition"><i class="fa-brands fa-youtube"></i></a>
+            <div><h4 class="font-black uppercase mb-4">Linki</h4>
+                <div class="flex gap-4 text-slate-400">
+                    <a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-pink-500"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-500"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
         </div>
-        <div class="text-center py-6 text-[10px] text-slate-700 font-bold uppercase tracking-[4px]">facio® &copy; 2024 Wszystkie prawa zastrzeżone</div>
+        <div class="text-center pb-10 text-[10px] text-slate-600 uppercase">facio® &copy; 2024 Wszystkie prawa zastrzeżone</div>
     </footer>
 
     <script>
-        // ======= KONFIGURACJA FIREBASE =======
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -264,12 +271,13 @@
             projectId: "mzk-by-facio",
             storageBucket: "mzk-by-facio.firebasestorage.app",
             messagingSenderId: "676970411647",
-            appId: "1:676970411647:web:26137e7242c0db7c83714a"
+            appId: "1:676970411647:web:26137e7242c0db7c83714a",
+            measurementId: "G-EE72F501ZR"
         };
 
-        // ======= DANE DOSTĘPOWE =======
-        const ADMIN_UID = "discord:1008636151776682071"; // TU WPISZ SWOJE UID Z DISCORDA
-        const IMGBB_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
+        // ======= TUTAJ TWOJA ZMIANA: ADMIN PO NICKU =======
+        const ADMIN_NICK = "facioyt"; 
+        const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
@@ -277,18 +285,18 @@
         
         const postsRef = db.ref('elk/posts');
         const reportsRef = db.ref('elk/reports');
-        const commsRef = db.ref('elk/comments');
+        const commentsRootRef = db.ref('elk/comments');
         const adsRef = db.ref('elk/ads');
         const settingsRef = db.ref('elk/settings');
 
-        let allData = []; let allAds = [];
-        let adIndices = { left: 0, right: 0 };
-        let showLimit = 5; let editId = null; let adEditId = null;
+        let allData = []; let allAds = []; let adIndices = { left: 0, right: 0 };
+        let showLimit = 3; let editId = null; let adEditId = null;
         let currentOpenPostId = null; let currentReplyToId = null;
         let currentEditImages = []; let currentTab = 'all';
+        let appInitialized = false;
 
         window.core = {
-            // LOGOWANIE DISCORD + VERCEL
+            // LOGOWANIE DISCORD PRZEZ VERCEL
             login: () => {
                 window.location.href = "https://discord.com/oauth2/authorize?client_id=1230198651811659796&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
             },
@@ -319,12 +327,15 @@
                         document.getElementById('main-content').classList.remove('hidden');
                         document.getElementById('main-footer').classList.remove('hidden');
                         document.getElementById('comm-nick').value = savedNick || "Użytkownik";
-                        if(user.uid === ADMIN_UID) {
+
+                        // Weryfikacja Admina po Nicku
+                        if(savedNick === ADMIN_NICK) {
                             document.getElementById('admin-indicator').classList.remove('hidden');
                             document.getElementById('btn-open-admin').classList.remove('hidden');
                             document.getElementById('main-body').classList.add('admin-active');
                         }
-                        core.initApp();
+
+                        if (!appInitialized) { core.initApp(); appInitialized = true; }
                     } else if (savedToken) {
                         auth.signInWithCustomToken(savedToken).catch(() => core.logout());
                     } else {
@@ -333,42 +344,41 @@
                 });
             },
 
+            // WSZYSTKIE TWOJE FUNKCJE Z POPRZEDNIEGO KODU
             initApp: () => {
-                // Posty
                 postsRef.on('value', snap => {
-                    allData = []; const data = snap.val();
+                    const data = snap.val(); allData = [];
                     const admList = document.getElementById('admin-list'); if(admList) admList.innerHTML = "";
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(admList) admList.innerHTML += `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl mb-1"><span class="text-[10px] font-bold">${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-blue-400 font-bold text-[9px]">EDYTUJ</button><button onclick="core.deletePost('${id}')" class="text-red-500 font-bold text-[9px]">USUŃ</button></div></div>`;
+                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${DOMPurify.sanitize(v.title)}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
                         });
                     }
                     core.filterPosts();
                 });
 
-                // Reklamy
                 adsRef.on('value', snap => {
                     const data = snap.val(); allAds = [];
                     const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
                     if(zones.left) zones.left.innerHTML = ""; if(zones.right) zones.right.innerHTML = "";
-                    const admAdsList = document.getElementById('admin-ads-list'); if(admAdsList) admAdsList.innerHTML = "";
-
+                    const adAdminList = document.getElementById('admin-ads-list'); if(adAdminList) adAdminList.innerHTML = "";
                     if(data) {
                         Object.entries(data).forEach(([id, ad]) => {
                             allAds.push({ id, ...ad });
-                            const html = `<a href="${ad.link}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
-                            if(zones[ad.side]) zones[ad.side].innerHTML += html;
-                            if(admAdsList) admAdsList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-xl"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><span class="text-[9px] font-bold uppercase flex-1">${ad.side}</span><button onclick="core.deleteAd('${id}')" class="text-red-500 font-bold text-[9px]">USUŃ</button></div>`;
+                            const html = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
+                            if (zones[ad.side]) zones[ad.side].innerHTML += html;
+                            if (adAdminList) adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${DOMPurify.sanitize(ad.link)}</div><div class="flex gap-2"><button onclick="core.editAd('${id}')" class="text-amber-500 text-[9px] font-bold">EDYTUJ</button><button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px] font-bold">USUŃ</button></div></div>`;
                         });
                         ['left', 'right'].forEach(s => {
-                            const first = zones[s]?.querySelector('.ad-box');
+                            if (!zones[s]) return;
+                            const first = zones[s].querySelector('.ad-box');
                             if(first) first.classList.add('active');
+                            else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
                         });
                     }
                 });
 
-                // Ustawienia
                 settingsRef.on('value', snap => {
                     const d = snap.val(); if(!d) return;
                     document.getElementById('txt-about').innerText = d.about || "";
@@ -377,56 +387,72 @@
                     document.getElementById('txt-coop').innerText = d.coop || "";
                 });
 
-                // Raporty
-                reportsRef.on('value', snap => {
-                    const count = snap.val() ? Object.keys(snap.val()).length : 0;
-                    document.getElementById('notif-count').innerText = count;
-                    document.getElementById('notif-count').classList.toggle('hidden', count === 0);
-                    core.loadReports();
+                reportsRef.on('value', s => {
+                    const c = s.val() ? Object.keys(s.val()).length : 0;
+                    const el = document.getElementById('notif-count');
+                    if(el) { el.innerText = c; el.classList.toggle('hidden', c === 0); }
                 });
 
                 core.initNotifications();
                 setInterval(core.rotateAds, 5000);
             },
 
-            // FUNKCJA MARKDOWN
+            // POWIADOMIENIA I TOASTY
+            toggleNotifMenu: () => document.getElementById('notif-dropdown').classList.toggle('hidden'),
+            loadNotifications: () => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                const list = document.getElementById('notif-list'); if(!list) return;
+                list.innerHTML = notifs.length === 0 ? '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>' : "";
+                let unread = 0;
+                notifs.forEach(n => {
+                    if (!n.read) unread++;
+                    list.innerHTML += `<div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${n.read ? 'opacity-50' : 'bg-white/5'}">
+                        <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
+                        ${n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500"></div>'}
+                    </div>`;
+                });
+                const badge = document.getElementById('global-notif-count');
+                if(badge) { badge.innerText = unread; badge.classList.toggle('hidden', unread === 0); }
+            },
+            addNotification: (msg, type, postId) => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                notifs.unshift({ id: Date.now(), msg, type, postId, read: false, ts: Date.now() });
+                localStorage.setItem('my_notifs', JSON.stringify(notifs.slice(0, 30)));
+                core.showToast(msg, type); core.loadNotifications();
+            },
+            clickNotif: (id, postId) => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                const n = notifs.find(x => x.id === id); if(n) n.read = true;
+                localStorage.setItem('my_notifs', JSON.stringify(notifs));
+                core.loadNotifications(); document.getElementById('notif-dropdown').classList.add('hidden');
+                if(postId) { const p = allData.find(x => x.id === postId); if(p) core.showFull(p); }
+            },
+            clearNotifs: () => { localStorage.setItem('my_notifs', "[]"); core.loadNotifications(); },
+            showToast: (msg, type) => {
+                const t = document.createElement('div'); t.className = `toast toast-${type} show`;
+                t.innerText = msg; document.getElementById('toast-container').appendChild(t);
+                setTimeout(() => t.remove(), 5000);
+            },
+            initNotifications: () => {
+                const lastExit = parseInt(localStorage.getItem('user_last_exit') || Date.now());
+                postsRef.on('child_added', snap => {
+                    if(snap.val().ts > lastExit) core.addNotification(`Nowa wiadomość: ${snap.val().title}`, 'info', snap.key);
+                });
+                window.addEventListener('beforeunload', () => localStorage.setItem('user_last_exit', Date.now().toString()));
+                core.loadNotifications();
+            },
+
+            // MARKDOWN I RENDEROWANIE
             parseMarkdown: (text) => {
                 if(!text) return "";
                 let html = DOMPurify.sanitize(text);
-                html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>')
+                return html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>')
+                           .replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>')
                            .replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>')
                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                           .replace(/__(.*?)__/g, '<span class="md-u">$1</span>')
                            .replace(/\*(.*?)\*/g, '<em>$1</em>');
-                return html;
             },
-
-            // DODAWANIE WPISU
-            publish: async () => {
-                const t = document.getElementById('in-title').value;
-                const c = document.getElementById('in-content').value;
-                const cat = document.getElementById('in-category').value;
-                const a = document.getElementById('in-author').value || "Redakcja";
-                const dCustom = document.getElementById('in-date').value;
-                const files = document.getElementById('in-files').files;
-                if(!t || !c) return alert("Wymagany tytuł i treść!");
-
-                document.getElementById('loader').style.display = 'flex';
-                let newUrls = [];
-                for(let f of files) {
-                    const fd = new FormData(); fd.append("image", f);
-                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-                    const res = await r.json(); if(res.success) newUrls.push(res.data.url);
-                }
-
-                const finalImgs = [...currentEditImages, ...newUrls];
-                const ts = editId ? allData.find(x => x.id === editId).ts : Date.now();
-                const data = { title: t, content: c, category: cat, author: a, images: finalImgs, ts: ts, date: dCustom || new Date().toLocaleDateString('pl-PL'), likes: (editId ? allData.find(x => x.id === editId).likes : 0) };
-
-                const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
-                act.then(() => location.reload());
-            },
-
-            // RENDEROWANIE STRONY GŁÓWNEJ
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
                 let f = allData;
@@ -434,108 +460,98 @@
                 f = f.filter(p => p.title.toLowerCase().includes(term));
                 core.renderPosts(f, term !== "" || currentTab !== 'all');
             },
-
-            renderPosts: (items, isSearch = false) => {
+            renderPosts: (items, isSearch) => {
                 const container = document.getElementById('news-container'); container.innerHTML = "";
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
-                    const card = document.createElement('div'); card.className = "card glass p-6 rounded-[25px] cursor-pointer post-anim";
-                    card.innerHTML = `<div class="flex gap-6 flex-col md:flex-row">
-                        ${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-32 h-32 object-cover rounded-2xl">` : ''}
-                        <div class="flex-1">
-                            <span class="category-tag">${v.category || 'Wydarzenia'}</span>
-                            <h2 class="font-black text-2xl mt-1 tracking-tighter">${v.title}</h2>
-                            <div class="flex gap-3 mt-5 items-center">
-                                <span class="author-badge">${v.author}</span>
-                                <span class="text-[10px] text-red-500 font-black"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span>
-                            </div>
-                        </div>
-                    </div>`;
-                    card.onclick = () => core.showFull(v);
-                    container.appendChild(card);
+                    const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.onclick = () => core.showFull(v); container.appendChild(card);
                 });
                 document.getElementById('more-container').classList.toggle('hidden', isSearch || items.length <= showLimit);
             },
 
-            showFull: (data) => {
-                currentOpenPostId = data.id;
-                document.getElementById('view-home').classList.add('hidden');
-                document.getElementById('search-area').classList.add('hidden');
-                document.getElementById('view-article').classList.remove('hidden');
-                
-                const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
-                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-8 py-4 rounded-full border border-white/5 cursor-pointer mb-10 transition ${isLiked}`;
-                document.getElementById('like-count').innerText = data.likes || 0;
-
-                core.loadComments(data.id);
-                document.getElementById('article-content').innerHTML = `
-                    <h1 class="text-4xl font-black mb-4 tracking-tighter">${data.title}</h1>
-                    <div class="flex gap-4 mb-10 items-center">
-                        <span class="author-badge">${data.author}</span>
-                        <span class="text-[10px] font-bold opacity-40">${data.date}</span>
-                    </div>
-                    <div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-12 leading-relaxed">${core.parseMarkdown(data.content)}</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-[30px] shadow-2xl">`).join('')}
-                    </div>`;
-                window.scrollTo(0,0);
+            // ADMIN I PUBLIKACJA
+            setAdminTab: (tab) => {
+                ['new', 'comms', 'notifs', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.toggle('hidden', s !== tab));
+                document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.toggle('active', b.id === `btn-adm-${tab}`));
+                if(tab === 'comms') core.loadAllCommentsAdmin();
+            },
+            publish: async () => {
+                const t = document.getElementById('in-title').value;
+                const c = document.getElementById('in-content').value;
+                const cat = document.getElementById('in-category').value;
+                const a = document.getElementById('in-author').value;
+                const files = document.getElementById('in-files').files;
+                if(!t || !c) return alert("Wypełnij pola!");
+                document.getElementById('loader').style.display = 'flex';
+                let newUrls = [];
+                for(let f of files) {
+                    const fd = new FormData(); fd.append("image", f);
+                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                    const res = await r.json(); if(res.success) newUrls.push(res.data.url);
+                }
+                const data = { title: t, content: c, author: a, category: cat, images: [...currentEditImages, ...newUrls], ts: editId ? allData.find(x => x.id === editId).ts : Date.now(), date: document.getElementById('in-date').value || new Date().toLocaleString(), likes: editId ? allData.find(x => x.id === editId).likes : 0 };
+                const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
+                act.then(() => location.reload());
             },
 
-            // KOMENTARZE SYSTEM
+            // KOMENTARZE I RESZTA
+            loadComments: (pid) => {
+                db.ref(`elk/comments/${pid}`).on('value', snap => {
+                    const list = document.getElementById('comments-list'); list.innerHTML = "";
+                    if(!snap.val()) return;
+                    Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
+                        let reps = "";
+                        if(c.replies) {
+                            Object.entries(c.replies).forEach(([rid, r]) => {
+                                reps += `<div class="reply-item"><span class="font-black text-blue-400 text-[11px]">${r.nick}</span><p class="text-xs">${r.text}</p></div>`;
+                            });
+                        }
+                        list.innerHTML += `<div class="comment-item">
+                            <span class="font-black text-blue-400 text-xs">${c.nick}</span>
+                            <p class="text-sm">${c.text}</p>
+                            <div class="flex gap-4 mt-2">
+                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span>
+                                <span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>
+                            </div>
+                            <div class="replies-container" style="display:block">${reps}</div>
+                        </div>`;
+                    });
+                });
+            },
             addComment: () => {
                 const n = document.getElementById('comm-nick').value;
                 const t = document.getElementById('comm-text').value;
                 if(!t) return;
                 const data = { nick: n, text: t, ts: Date.now(), date: new Date().toLocaleString(), reacts: 0 };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
-                ref.push(data).then(() => {
-                    document.getElementById('comm-text').value = ""; core.cancelReply();
-                    core.addNotification("Wysłano komentarz!", "info");
-                });
+                ref.push(data).then(() => { document.getElementById('comm-text').value = ""; core.cancelReply(); });
             },
 
-            loadComments: (pid) => {
-                db.ref(`elk/comments/${pid}`).on('value', snap => {
-                    const list = document.getElementById('comments-list'); list.innerHTML = "";
-                    if(!snap.val()) return;
-                    Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
-                        let repsHtml = "";
-                        if(c.replies) {
-                            Object.entries(c.replies).forEach(([rid, r]) => {
-                                repsHtml += `<div class="reply-item text-xs">
-                                    <span class="font-black text-blue-400 uppercase text-[9px]">${r.nick}</span><p class="my-1">${r.text}</p>
-                                    <div class="flex gap-3"><span onclick="core.reactComm('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span></div>
-                                </div>`;
-                            });
-                        }
-                        list.innerHTML += `<div class="comment-item">
-                            <span class="font-black text-blue-400 uppercase text-[10px]">${c.nick}</span>
-                            <p class="text-sm my-2">${c.text}</p>
-                            <div class="flex gap-5 items-center mt-3">
-                                <span onclick="core.reactComm('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span>
-                                <span onclick="core.setReply('${cid}', '${c.nick}')" class="text-[9px] font-black uppercase opacity-40 cursor-pointer">Odpowiedz</span>
-                                <span onclick="core.reportComm('${cid}', '${c.text}', '${c.nick}')" class="text-[9px] font-black uppercase text-red-500/50 cursor-pointer">Zgłoś</span>
-                                ${auth.currentUser?.uid === ADMIN_UID ? `<span onclick="core.deleteComm('${cid}')" class="text-[9px] font-black uppercase text-red-500 cursor-pointer">Usuń</span>` : ''}
-                            </div>
-                            <div class="space-y-2">${repsHtml}</div>
-                        </div>`;
-                    });
-                });
+            // NAWIGACJA
+            goHome: () => {
+                ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+                ['view-article', 'view-admin', 'view-legal'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                window.scrollTo(0,0);
             },
-
-            // REKLAMY PANEL & ROTACJA
-            publishAd: async () => {
-                const side = document.getElementById('ad-side').value;
-                const file = document.getElementById('ad-file').files[0];
-                const target = document.getElementById('ad-target').value;
-                if(!file || !target) return alert("Wybierz plik i link!");
-                
-                const fd = new FormData(); fd.append("image", file);
-                const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
-                const res = await r.json();
-                if(res.success) adsRef.push({ side, img: res.data.url, link: target, ts: Date.now() });
+            openAdmin: () => {
+                if(localStorage.getItem('user_nick') !== ADMIN_NICK) return alert("Brak uprawnień!");
+                ['view-home', 'search-area'].forEach(id => document.getElementById(id).classList.add('hidden'));
+                document.getElementById('view-admin').classList.remove('hidden');
             },
-
+            showFull: (data) => {
+                currentOpenPostId = data.id; core.loadComments(data.id);
+                document.getElementById('view-home').classList.add('hidden');
+                document.getElementById('search-area').classList.add('hidden');
+                document.getElementById('view-article').classList.remove('hidden');
+                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
+                window.scrollTo(0,0);
+            },
+            switchTab: (id, btn) => {
+                currentTab = id; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); core.filterPosts();
+            },
             rotateAds: () => {
                 ['left', 'right'].forEach(s => {
                     const boxes = document.getElementById(`ad-${s[0]}-zone`)?.querySelectorAll('.ad-box');
@@ -546,26 +562,9 @@
                     }
                 });
             },
-
-            // ADMIN TABS
-            setAdminTab: (tab) => {
-                ['new', 'comms', 'notifs', 'ads', 'settings'].forEach(s => document.getElementById(`admin-${s}-section`).classList.add('hidden'));
-                document.getElementById(`admin-${tab}-section`).classList.remove('hidden');
-                document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(`btn-adm-${tab}`).classList.add('active');
-                if(tab === 'comms') core.loadAllCommsAdmin();
-            },
-
-            // USTAWIENIA CHMURA
             saveSettings: () => {
-                settingsRef.set({
-                    about: document.getElementById('set-about').value,
-                    redaction: document.getElementById('set-redaction').value,
-                    privacy: document.getElementById('set-privacy').value,
-                    coop: document.getElementById('set-coop').value
-                }).then(() => alert("Ustawienia zapisane w Firebase!"));
+                settingsRef.set({ about: document.getElementById('set-about').value, redaction: document.getElementById('set-redaction').value, privacy: document.getElementById('set-privacy').value, coop: document.getElementById('set-coop').value }).then(() => alert("Zapisano!"));
             },
-
             loadSettingsInAdmin: () => {
                 settingsRef.once('value', s => {
                     const d = s.val(); if(!d) return;
@@ -575,84 +574,24 @@
                     document.getElementById('set-coop').value = d.coop || "";
                 });
             },
-
-            // POMOCNICZE
-            goHome: () => {
-                document.getElementById('view-home').classList.remove('hidden');
-                document.getElementById('search-area').classList.remove('hidden');
-                document.getElementById('view-article').classList.add('hidden');
-                document.getElementById('view-admin').classList.add('hidden');
-                document.getElementById('view-legal').classList.add('hidden');
-                window.scrollTo(0,0);
-            },
-            openAdmin: () => {
-                core.goHome();
-                document.getElementById('view-home').classList.add('hidden');
-                document.getElementById('view-admin').classList.remove('hidden');
-                core.loadSettingsInAdmin();
-            },
-            showLegal: (t) => {
-                core.goHome();
-                document.getElementById('view-home').classList.add('hidden');
+            showLegal: (type) => {
+                core.goHome(); document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('view-legal').classList.remove('hidden');
-                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
-                document.getElementById('legal-title').innerText = titles[t];
-                document.getElementById('legal-body').innerText = document.getElementById(`txt-${t}`).innerText;
+                document.getElementById('legal-title').innerText = type;
+                document.getElementById('legal-body').innerText = document.getElementById(`txt-${type}`).innerText;
             },
-            toggleNotifMenu: () => document.getElementById('notif-dropdown').classList.toggle('hidden'),
-            addNotification: (msg, type) => {
-                const toast = document.createElement('div');
-                toast.className = `toast show`;
-                toast.innerText = msg;
-                document.getElementById('toast-container').appendChild(toast);
-                setTimeout(() => toast.remove(), 4000);
+            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
+            setReply: (cid, nick) => { currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden'); document.getElementById('target-nick').innerText = nick; },
+            previewNewFiles: () => core.renderEditImages(document.getElementById('in-files').files),
+            renderEditImages: (newFiles = []) => {
+                const container = document.getElementById('edit-images-preview'); container.innerHTML = "";
+                currentEditImages.forEach((url, index) => container.innerHTML += `<div class="preview-wrapper"><img src="${url}"></div>`);
             },
-            initNotifications: () => {},
-            clearNotifs: () => { document.getElementById('notif-list').innerHTML = ""; },
-            deletePost: (id) => confirm("Na pewno usunąć?") && postsRef.child(id).remove(),
-            deleteAd: (id) => adsRef.child(id).remove(),
-            editMode: (id) => {
-                const p = allData.find(x => x.id === id); editId = id;
-                document.getElementById('in-title').value = p.title;
-                document.getElementById('in-author').value = p.author;
-                document.getElementById('in-content').value = p.content;
-                document.getElementById('admin-mode-title').innerText = "Edycja wpisu";
-                document.getElementById('cancel-edit-btn').classList.remove('hidden');
-            },
-            cancelEdit: () => {
-                editId = null; document.getElementById('in-title').value = ""; document.getElementById('in-content').value = "";
-                document.getElementById('admin-mode-title').innerText = "Zarządzanie Treścią";
-                document.getElementById('cancel-edit-btn').classList.add('hidden');
-            },
-            reportComm: (cid, text, nick) => {
-                if(confirm("Zgłosić ten komentarz do moderacji?")) reportsRef.push({ cid, text, nick, ts: Date.now() });
-            },
-            loadReports: () => {
-                reportsRef.on('value', snap => {
-                    const list = document.getElementById('reports-list'); list.innerHTML = "";
-                    if(!snap.val()) return;
-                    Object.entries(snap.val()).forEach(([rid, r]) => {
-                        list.innerHTML += `<div class="bg-red-950/20 border border-red-500/20 p-4 rounded-xl mb-2">
-                            <p class="text-[10px] font-bold uppercase text-red-500">${r.nick}:</p>
-                            <p class="text-xs italic my-2">"${r.text}"</p>
-                            <button onclick="core.dismissReport('${rid}')" class="text-[9px] font-black uppercase bg-slate-800 px-3 py-1 rounded">Odrzuć</button>
-                        </div>`;
-                    });
-                });
-            },
-            dismissReport: (rid) => reportsRef.child(rid).remove(),
-            reactComm: (cid) => {
-                const key = `re_${cid}`; if(localStorage.getItem(key)) return;
-                db.ref(`elk/comments/${currentOpenPostId}/${cid}/reacts`).transaction(r => (r || 0) + 1);
-                localStorage.setItem(key, "1");
-            },
-            setReply: (cid, nick) => {
-                currentReplyToId = cid; 
-                document.getElementById('replying-to-info').classList.remove('hidden');
-                document.getElementById('target-nick').innerText = nick;
-                document.getElementById('comm-text').focus();
-            },
-            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); }
+            likePost: () => {
+                if(localStorage.getItem(`liked_${currentOpenPostId}`)) return;
+                postsRef.child(currentOpenPostId).child('likes').transaction(l => (l || 0) + 1);
+                localStorage.setItem(`liked_${currentOpenPostId}`, "1");
+            }
         };
 
         core.checkAuth();
