@@ -10,6 +10,9 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
         :root { --main: #0062ff; }
@@ -98,6 +101,14 @@
 </head>
 <body id="main-body">
 
+    <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
+        <h1 class="text-4xl font-black italic mb-2 uppercase">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
+        <p class="text-slate-400 mb-8 text-sm">Zaloguj się swoim kontem Google, aby przeglądać i komentować.</p>
+        <button onclick="core.login()" class="bg-white text-black px-8 py-4 rounded-full font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-blue-500 hover:text-white transition shadow-xl">
+            <i class="fa-brands fa-google"></i> Zaloguj przez Google
+        </button>
+    </div>
+
     <div id="toast-container"></div>
 
     <div class="ad-container ad-left" id="ad-l-zone"></div>
@@ -107,7 +118,7 @@
         <div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div>
     </div>
 
-    <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8">
+    <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8 hidden" id="main-header">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">
                 EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI
@@ -125,19 +136,22 @@
                             <span>Powiadomienia</span>
                             <span onclick="core.clearNotifs()" class="cursor-pointer hover:text-red-500 transition">Wyczyść</span>
                         </div>
-                        <div id="notif-list" class="flex flex-col">
-                            </div>
+                        <div id="notif-list" class="flex flex-col"></div>
                     </div>
                 </div>
-                <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Tryb Admina</span>
-                <button onclick="core.openAdmin()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition">
-                    Panel Redakcji
-                </button>
+
+                <div class="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
+                    <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
+                    <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
+                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">
+                        Panel
+                    </button>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 min-h-screen">
+    <main class="max-w-5xl mx-auto px-4 min-h-screen hidden" id="main-content">
         
         <div id="search-area" class="mb-8 space-y-6">
             <div class="relative">
@@ -186,7 +200,7 @@
                         <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
                         <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
                     </div>
-                    <input type="text" id="comm-nick" placeholder="Twój Nick" class="input-dark">
+                    <input type="text" id="comm-nick" placeholder="Podaj swój nick (wymagane)" class="input-dark">
                     <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
                     <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
                 </div>
@@ -203,8 +217,8 @@
             </div>
         </div>
 
-        <footer id="main-footer" class="max-w-full">
-            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
+        <footer id="main-footer" class="max-w-full hidden">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4">
                 <div>
                     <h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4>
                     <p id="txt-about" class="text-slate-400 leading-relaxed">Portal informacyjny miasta Ełk. Najświeższe wiadomości, aktualizacje i informacje prosto z serca Mazur.</p>
@@ -233,7 +247,7 @@
             </div>
             <div class="text-center mt-12 text-[10px] text-slate-600 uppercase tracking-widest flex flex-col gap-1">
                 <span>facio® &copy; 2024 Wszystkie prawa zastrzeżone</span>
-                <span class="text-blue-500/50 font-bold"><i class="fa-solid fa-cloud"></i> Dane przechowywane bezpiecznie w chmurze Firebase</span>
+                <span class="text-blue-500/50 font-bold"><i class="fa-solid fa-cloud"></i> Dane chronione przez Firebase Auth</span>
             </div>
         </footer>
 
@@ -333,6 +347,7 @@
     </main>
 
     <script>
+        // ======= TU WKLEJ SWOJE DANE Z FIREBASE (CONFIG) =======
         const firebaseConfig = {
             apiKey: "AIzaSy...", 
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -341,16 +356,21 @@
             appId: "1:676970411647:web:5703d5fb5fb499ff83714a"
         };
 
+        // ======= TU WKLEJ SWOJE UID =======
+        const ADMIN_UID = "TUTAJ_WKLEJ_SWOJE_UID"; 
+        
+        // ======= KLUCZ IMGBB (ZWRÓCONY) =======
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
+        
         const postsRef = db.ref('elk/posts');
         const reportsRef = db.ref('elk/reports');
         const commentsRootRef = db.ref('elk/comments');
         const adsRef = db.ref('elk/ads');
         const settingsRef = db.ref('elk/settings');
-
-        const DEFAULT_PASS = "1234";
 
         let allData = [];
         let allAds = [];
@@ -364,8 +384,94 @@
         let currentTab = 'all';
 
         window.core = {
+            // LOGOWANIE
+            login: () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider).catch(err => alert("Błąd: " + err.message));
+            },
+            logout: () => {
+                auth.signOut().then(() => location.reload());
+            },
             
-            /* -- NOWE FUNKCJE DLA MENU POWIADOMIEŃ -- */
+            // SPRAWDZANIE ZALOGOWANIA
+            checkAuth: () => {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        document.getElementById('auth-overlay').classList.add('hidden');
+                        document.getElementById('main-header').classList.remove('hidden');
+                        document.getElementById('main-content').classList.remove('hidden');
+                        document.getElementById('main-footer').classList.remove('hidden');
+
+                        if(user.uid === ADMIN_UID) {
+                            document.getElementById('admin-indicator').classList.remove('hidden');
+                            document.getElementById('btn-open-admin').classList.remove('hidden');
+                            document.getElementById('main-body').classList.add('admin-active');
+                        }
+
+                        core.initApp(); 
+                    } else {
+                        document.getElementById('auth-overlay').classList.remove('hidden');
+                        document.getElementById('main-header').classList.add('hidden');
+                        document.getElementById('main-content').classList.add('hidden');
+                        document.getElementById('main-footer').classList.add('hidden');
+                    }
+                });
+            },
+
+            initApp: () => {
+                postsRef.on('value', snap => {
+                    const data = snap.val(); allData = [];
+                    const admList = document.getElementById('admin-list'); admList.innerHTML = "";
+                    if(data) {
+                        Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
+                            allData.push({ id, ...v });
+                            admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${DOMPurify.sanitize(v.title)}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
+                        });
+                    }
+                    core.filterPosts();
+                });
+
+                adsRef.on('value', snap => {
+                    const data = snap.val(); allAds = [];
+                    const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
+                    const adAdminList = document.getElementById('admin-ads-list');
+                    zones.left.innerHTML = ""; zones.right.innerHTML = ""; adAdminList.innerHTML = "";
+                    if(data) {
+                        Object.entries(data).forEach(([id, ad]) => {
+                            allAds.push({ id, ...ad });
+                            const adHtml = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
+                            zones[ad.side].innerHTML += adHtml;
+                            adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${DOMPurify.sanitize(ad.link)}</div><div class="flex gap-2"><button onclick="core.editAd('${id}')" class="text-amber-500 text-[9px] font-bold">EDYTUJ</button><button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px] font-bold">USUŃ</button></div></div>`;
+                        });
+                        ['left', 'right'].forEach(s => {
+                            const first = zones[s].querySelector('.ad-box');
+                            if(first) first.classList.add('active');
+                            else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
+                        });
+                    } else {
+                        zones.left.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Lewa)</div>';
+                        zones.right.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Prawa)</div>';
+                    }
+                });
+
+                settingsRef.on('value', snap => {
+                    const d = snap.val(); if(!d) return;
+                    document.getElementById('txt-about').innerText = DOMPurify.sanitize(d.about) || "Portal informacyjny...";
+                    document.getElementById('txt-redaction').innerText = DOMPurify.sanitize(d.redaction) || "Brak danych.";
+                    document.getElementById('txt-privacy').innerText = DOMPurify.sanitize(d.privacy) || "Brak danych.";
+                    document.getElementById('txt-coop').innerText = DOMPurify.sanitize(d.coop) || "Brak danych.";
+                });
+
+                reportsRef.on('value', s => {
+                    const c = s.val() ? Object.keys(s.val()).length : 0;
+                    const el = document.getElementById('notif-count');
+                    el.innerText = c; el.classList.toggle('hidden', c === 0);
+                });
+
+                core.initNotifications();
+                setInterval(core.rotateAds, 5000);
+            },
+
             toggleNotifMenu: () => {
                 document.getElementById('notif-dropdown').classList.toggle('hidden');
             },
@@ -383,7 +489,6 @@
                         if (!n.read) unreadCount++;
                         const bgClass = n.read ? 'opacity-50' : 'bg-white/5';
                         const dot = n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>';
-                        
                         let icon = '<i class="fa-solid fa-info-circle text-blue-500"></i>';
                         if (n.type === 'like') icon = '<i class="fa-solid fa-heart text-red-500"></i>';
                         if (n.type === 'reply') icon = '<i class="fa-solid fa-reply text-green-500"></i>';
@@ -391,13 +496,12 @@
                         list.innerHTML += `
                             <div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${bgClass}">
                                 <div class="text-lg w-6 text-center">${icon}</div>
-                                <div class="flex-1 text-[11px] text-slate-200 leading-tight">${n.msg}</div>
+                                <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
                                 ${dot}
                             </div>
                         `;
                     });
                 }
-
                 const badge = document.getElementById('global-notif-count');
                 badge.innerText = unreadCount;
                 badge.classList.toggle('hidden', unreadCount === 0);
@@ -405,10 +509,8 @@
 
             addNotification: (msg, type, postId) => {
                 const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
-                // Dodajemy nowe powiadomienie na początek tablicy, ucinamy żeby nie było więcej niż 30
                 notifs.unshift({ id: Date.now(), msg, type, postId, read: false, ts: Date.now() });
                 localStorage.setItem('my_notifs', JSON.stringify(notifs.slice(0, 30)));
-                
                 core.showToast(msg, type);
                 core.loadNotifications();
             },
@@ -422,16 +524,9 @@
                     core.loadNotifications();
                 }
                 document.getElementById('notif-dropdown').classList.add('hidden');
-                
-                // Przejście do artykułu (jeśli postId istnieje)
                 if (postId) {
                     const postData = allData.find(x => x.id === postId);
-                    if (postData) {
-                        core.showFull(postData);
-                    } else {
-                        // Jeśli klikniemy z innej zakładki (a dane jeszcze się nie wczytały)
-                        alert("Trwa ładowanie posta. Jeśli nie zadziała, odśwież i kliknij jeszcze raz.");
-                    }
+                    if (postData) core.showFull(postData);
                 }
             },
 
@@ -439,8 +534,6 @@
                 localStorage.setItem('my_notifs', "[]");
                 core.loadNotifications();
             },
-            /* -- KONIEC NOWYCH FUNKCJI MENU -- */
-
 
             showToast: (msg, type = 'info') => {
                 const container = document.getElementById('toast-container');
@@ -454,14 +547,13 @@
 
             initNotifications: () => {
                 const lastExit = parseInt(localStorage.getItem('user_last_exit') || Date.now());
-                let notifiedPosts = []; // Zabezpieczenie przed wielokrotnym triggerem tego samego posta w sesji
-                
+                let notifiedPosts = []; 
                 postsRef.on('child_added', snap => {
                     const post = snap.val();
                     const pid = snap.key;
                     if(post.ts > lastExit && !notifiedPosts.includes(pid)) {
                         notifiedPosts.push(pid);
-                        core.addNotification(`Nowa wiadomość (opublikowano podczas nieobecności): ${post.title}`, 'info', pid);
+                        core.addNotification(`Nowa wiadomość: ${post.title}`, 'info', pid);
                     }
                 });
 
@@ -470,7 +562,6 @@
                     db.ref(`elk/comments/${item.pId}/${item.cId}`).on('value', snap => {
                         const data = snap.val();
                         if(!data) return;
-                        
                         if(data.reacts > (item.rCount || 0)) {
                             item.rCount = data.reacts; 
                             core.saveMyComms(myComms); 
@@ -484,19 +575,15 @@
                         }
                     });
                 });
-
-                window.addEventListener('beforeunload', () => {
-                    localStorage.setItem('user_last_exit', Date.now().toString());
-                });
-
-                core.loadNotifications(); // Inicjalizacja menu przy starcie strony
+                window.addEventListener('beforeunload', () => { localStorage.setItem('user_last_exit', Date.now().toString()); });
+                core.loadNotifications(); 
             },
 
             saveMyComms: (arr) => localStorage.setItem('my_comments', JSON.stringify(arr)),
 
             parseMarkdown: (text) => {
                 if(!text) return "";
-                let html = text;
+                let html = DOMPurify.sanitize(text); 
                 html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>').replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>').replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/__(.*?)__/g, '<span class="md-u">$1</span>').replace(/\*(.*?)\*/g, '<em>$1</em>');
                 return html;
             },
@@ -536,15 +623,14 @@
             },
 
             openAdmin: () => {
-                const pin = prompt("HASŁO:");
-                if(pin === DEFAULT_PASS) {
-                    document.getElementById('main-body').classList.add('admin-active');
-                    document.getElementById('admin-indicator').classList.remove('hidden');
+                if(auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
                     document.getElementById('view-home').classList.add('hidden');
                     document.getElementById('search-area').classList.add('hidden');
                     document.getElementById('view-admin').classList.remove('hidden');
                     core.loadReports();
-                } else { alert("Błąd!"); }
+                } else { 
+                    alert("Odmowa dostępu! Tylko właściciel może otworzyć ten panel."); 
+                }
             },
 
             showLegal: (type) => {
@@ -587,12 +673,17 @@
                 if(!target) return alert("Podaj link!");
                 if(!adEditId && !file) return alert("Wybierz zdjęcie!");
                 document.getElementById('loader').style.display = 'flex';
+                
                 let imgUrl = adEditId ? allAds.find(x => x.id === adEditId).img : "";
+                
                 if(file) {
-                    const fd = new FormData(); fd.append("image", file);
+                    const fd = new FormData(); 
+                    fd.append("image", file);
                     const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                    const d = await r.json(); if(d.success) imgUrl = d.data.url;
+                    const d = await r.json(); 
+                    if(d.success) imgUrl = d.data.url;
                 }
+
                 const data = { side, img: imgUrl, link: target, ts: Date.now() };
                 const act = adEditId ? adsRef.child(adEditId).update(data) : adsRef.push(data);
                 act.then(() => { core.cancelAdEdit(); document.getElementById('loader').style.display = 'none'; });
@@ -636,16 +727,21 @@
                 const a = document.getElementById('in-author').value || "Redakcja";
                 const customDate = document.getElementById('in-date').value;
                 const files = document.getElementById('in-files').files;
-                if(!t || !c) return alert("Pola!");
+                if(!t || !c) return alert("Wypełnij pola!");
+                
                 document.getElementById('loader').style.display = 'flex';
                 let newUrls = [];
+                
                 if(files.length > 0) {
                     for(let f of files) {
-                        const fd = new FormData(); fd.append("image", f);
+                        const fd = new FormData(); 
+                        fd.append("image", f);
                         const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                        const d = await r.json(); if(d.success) newUrls.push(d.data.url);
+                        const d = await r.json(); 
+                        if(d.success) newUrls.push(d.data.url);
                     }
                 }
+
                 const finalImgs = [...currentEditImages, ...newUrls];
                 const now = new Date().toLocaleString('pl-PL');
                 let data = { title: t, content: c, author: a, category: cat, images: finalImgs };
@@ -693,7 +789,7 @@
                 const toShow = isSearch ? items : items.slice(0, showLimit);
                 toShow.forEach(v => {
                     const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
-                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${v.category || 'Wydarzenia'}</span><h2 class="font-black text-xl">${v.title}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${v.author}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${DOMPurify.sanitize(v.category || 'Wydarzenia')}</span><h2 class="font-black text-xl">${DOMPurify.sanitize(v.title)}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${DOMPurify.sanitize(v.author)}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v);
                     container.appendChild(card);
                 });
@@ -713,9 +809,18 @@
             },
 
             addComment: () => {
-                const n = document.getElementById('comm-nick').value;
+                let n = document.getElementById('comm-nick').value.trim();
                 const t = document.getElementById('comm-text').value;
-                if(!n || !t) return alert("Pola!");
+                if(!n || !t) return alert("Wypełnij oba pola!");
+
+                // Blokada przed podszywaniem się pod Administracje
+                const forbidden = ["admin", "administrator", "redakcja", "facioyt", "facio"];
+                if (forbidden.includes(n.toLowerCase())) {
+                    if (auth.currentUser && auth.currentUser.uid !== ADMIN_UID) {
+                        return alert("Odmowa! Nie możesz użyć nicku zarezerwowanego dla administracji.");
+                    }
+                }
+                
                 const data = { nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
                 let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
                 ref.push(data).then((snap) => { 
@@ -731,7 +836,7 @@
 
             setReply: (cid, nick) => {
                 currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden');
-                document.getElementById('target-nick').innerText = nick;
+                document.getElementById('target-nick').innerText = DOMPurify.sanitize(nick);
             },
             cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
 
@@ -764,7 +869,7 @@
                     const container = document.getElementById('reports-list'); container.innerHTML = "";
                     if(!snap.val()) return;
                     Object.entries(snap.val()).forEach(([rid, r]) => {
-                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold">${r.author}:</p><p class="text-sm italic my-2">"${r.text}"</p><div class="flex gap-2"><button onclick="core.deleteComment('${r.commentId}', ${r.isReply}, '${r.parentId}', '${r.postId}'); core.dismissReport('${rid}')" class="bg-red-600 px-3 py-1 rounded text-[9px] font-bold">USUŃ</button><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">ODRZUĆ</button></div></div>`;
+                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold">${DOMPurify.sanitize(r.author)}:</p><p class="text-sm italic my-2">"${DOMPurify.sanitize(r.text)}"</p><div class="flex gap-2"><button onclick="core.deleteComment('${r.commentId}', ${r.isReply}, '${r.parentId}', '${r.postId}'); core.dismissReport('${rid}')" class="bg-red-600 px-3 py-1 rounded text-[9px] font-bold">USUŃ</button><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">ODRZUĆ</button></div></div>`;
                     });
                 });
             },
@@ -776,15 +881,15 @@
                     Object.entries(snap.val()).forEach(([postId, comms]) => {
                         Object.entries(comms).forEach(([cid, c]) => {
                             container.innerHTML += `<div class="notif-card">
-                                <p class="text-[10px] text-blue-400 font-bold">${c.nick} (ID Posta: ${postId}):</p>
-                                <p class="text-xs my-1">${c.text}</p>
+                                <p class="text-[10px] text-blue-400 font-bold">${DOMPurify.sanitize(c.nick)} (ID Posta: ${postId}):</p>
+                                <p class="text-xs my-1">${DOMPurify.sanitize(c.text)}</p>
                                 <button onclick="core.deleteComment('${cid}', false, null, '${postId}')" class="text-red-500 text-[9px] font-bold">USUŃ KOMENTARZ</button>
                             </div>`;
                             if(c.replies) {
                                 Object.entries(c.replies).forEach(([rid, r]) => {
                                     container.innerHTML += `<div class="notif-card ml-12 border-l-2 border-blue-600/30 bg-blue-600/5">
-                                        <p class="text-[10px] text-blue-300 font-bold italic">ODPOWIEDŹ OD: ${r.nick}</p>
-                                        <p class="text-xs my-1">${r.text}</p>
+                                        <p class="text-[10px] text-blue-300 font-bold italic">ODPOWIEDŹ OD: ${DOMPurify.sanitize(r.nick)}</p>
+                                        <p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p>
                                         <button onclick="core.deleteComment('${rid}', true, '${cid}', '${postId}')" class="text-red-400 text-[9px] font-bold">USUŃ ODPOWIEDŹ</button>
                                     </div>`;
                                 });
@@ -802,10 +907,10 @@
                         let reps = ""; 
                         if(c.replies) {
                             Object.entries(c.replies).forEach(([rid, r]) => {
-                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${r.nick}</span><p class="text-xs">${r.text}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${r.text}', '${r.nick}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
+                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${DOMPurify.sanitize(r.nick)}</span><p class="text-xs">${DOMPurify.sanitize(r.text)}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${DOMPurify.sanitize(r.text)}', '${DOMPurify.sanitize(r.nick)}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
                             });
                         }
-                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${c.nick}</span><p class="text-sm">${c.text}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${c.nick}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${c.text}', '${c.nick}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
+                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${DOMPurify.sanitize(c.nick)}</span><p class="text-sm">${DOMPurify.sanitize(c.text)}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${DOMPurify.sanitize(c.nick)}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
                     });
                 });
             },
@@ -820,7 +925,7 @@
                 document.getElementById('like-count').innerText = data.likes || 0;
 
                 core.loadComments(data.id);
-                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${data.title}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${data.author}</span><span class="text-xs opacity-40">${data.date}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
+                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${DOMPurify.sanitize(data.title)}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${DOMPurify.sanitize(data.author)}</span><span class="text-xs opacity-40">${DOMPurify.sanitize(data.date)}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
                 window.scrollTo(0,0);
             },
 
@@ -838,57 +943,9 @@
             }
         };
 
-        postsRef.on('value', snap => {
-            const data = snap.val(); allData = [];
-            const admList = document.getElementById('admin-list'); admList.innerHTML = "";
-            if(data) {
-                Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
-                    allData.push({ id, ...v });
-                    admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${v.title}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
-                });
-            }
-            core.filterPosts();
-        });
-
-        adsRef.on('value', snap => {
-            const data = snap.val(); allAds = [];
-            const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
-            const adAdminList = document.getElementById('admin-ads-list');
-            zones.left.innerHTML = ""; zones.right.innerHTML = ""; adAdminList.innerHTML = "";
-            if(data) {
-                Object.entries(data).forEach(([id, ad]) => {
-                    allAds.push({ id, ...ad });
-                    const adHtml = `<a href="${ad.link}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
-                    zones[ad.side].innerHTML += adHtml;
-                    adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${ad.link}</div><div class="flex gap-2"><button onclick="core.editAd('${id}')" class="text-amber-500 text-[9px] font-bold">EDYTUJ</button><button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px] font-bold">USUŃ</button></div></div>`;
-                });
-                ['left', 'right'].forEach(s => {
-                    const first = zones[s].querySelector('.ad-box');
-                    if(first) first.classList.add('active');
-                    else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
-                });
-            } else {
-                zones.left.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Lewa)</div>';
-                zones.right.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Prawa)</div>';
-            }
-        });
-
-        settingsRef.on('value', snap => {
-            const d = snap.val(); if(!d) return;
-            document.getElementById('txt-about').innerText = d.about || "Portal informacyjny...";
-            document.getElementById('txt-redaction').innerText = d.redaction || "Brak danych.";
-            document.getElementById('txt-privacy').innerText = d.privacy || "Brak danych.";
-            document.getElementById('txt-coop').innerText = d.coop || "Brak danych.";
-        });
-
-        reportsRef.on('value', s => {
-            const c = s.val() ? Object.keys(s.val()).length : 0;
-            const el = document.getElementById('notif-count');
-            el.innerText = c; el.classList.toggle('hidden', c === 0);
-        });
-
-        core.initNotifications();
-        setInterval(core.rotateAds, 5000);
+        // URUCHOMIENIE LOGOWANIA NA STARCIE
+        core.checkAuth();
+        
     </script>
 </body>
 </html>
