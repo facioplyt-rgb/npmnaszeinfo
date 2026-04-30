@@ -282,7 +282,7 @@
     </main>
 
     <script>
-        // ======= KONFIGURACJA =======
+        // ======= OSTATECZNA KONFIGURACJA DISCORD + FIREBASE =======
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -293,30 +293,92 @@
             appId: "1:676970411647:web:26137e7242c0db7c83714a",
             measurementId: "G-EE72F501ZR"
         };
-        const ADMIN_UID = "wXo2D56goYaId2IY7iUkcWs5tAG3"; 
+
+        // TUTAJ WKLEJ SWOJE NOWE UID (ZOBACZYSZ JE W KONSOLI F12 PO ZALOGOWANIU)
+        const ADMIN_UID = "discord:TWÓJ_NUMER_ID_Z_KONSOLI"; 
         const IMGBB_API_KEY = "19570ba1fa4dc27bd0ba974b4eb2e253";
+
+        // TWÓJ WYGENEROWANY LINK DISCORD
+        const DISCORD_LOGIN_URL = "https://discord.com/oauth2/authorize?client_id=1498418325502558328&response_type=code&redirect_uri=https%3A%2F%2Felk-backend.vercel.app%2Fapi%2Fauth&scope=identify";
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
         
-        const postsRef = db.ref('elk/posts');
-        const reportsRef = db.ref('elk/reports');
-        const commentsRootRef = db.ref('elk/comments');
-        const adsRef = db.ref('elk/ads');
-        const settingsRef = db.ref('elk/settings');
+        let currentNick = "Użytkownik Discorda"; 
+        let appInitialized = false;
 
-        let allData = [];
-        let allAds = [];
-        let adIndices = { left: 0, right: 0 };
-        let showLimit = 3;
-        let editId = null;
-        let adEditId = null;
-        let currentOpenPostId = null;
-        let currentReplyToId = null;
-        let currentEditImages = [];
-        let currentTab = 'all';
-        let appInitialized = false; 
+        window.core = {
+            login: () => {
+                console.log("[LOGOWANIE] Przekierowanie do Discord...");
+                window.location.href = DISCORD_LOGIN_URL;
+            },
+            
+            logout: () => {
+                auth.signOut().then(() => {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    location.reload();
+                });
+            },
+
+            checkAuth: () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const customToken = urlParams.get('token');
+                const discordNick = urlParams.get('nick');
+
+                // 1. Jeśli wracamy z serwera Vercel z tokenem:
+                if (customToken) {
+                    console.log("[AUTH] Wykryto token z Discorda, logowanie...");
+                    auth.signInWithCustomToken(customToken).then(() => {
+                        if (discordNick) currentNick = decodeURIComponent(discordNick);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }).catch(err => console.error("Błąd Custom Token:", err));
+                }
+
+                // 2. Słuchacz stanu logowania:
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        console.log("Zalogowano pomyślnie!");
+                        console.log("Twoje nowe UID Discorda to: ", user.uid); // Skopiuj to do ADMIN_UID!
+
+                        // Sprawdź czy mamy nick w bazie, jeśli nie - zapisz ten z Discorda
+                        db.ref(`elk/users/${user.uid}/nick`).once('value').then(snap => {
+                            if (snap.exists()) {
+                                currentNick = snap.val();
+                            } else {
+                                db.ref(`elk/users/${user.uid}/nick`).set(currentNick);
+                            }
+                            core.showMainApp(user);
+                        });
+                    } else {
+                        document.getElementById('auth-overlay').classList.remove('hidden');
+                        document.getElementById('main-header').classList.add('hidden');
+                        document.getElementById('main-content').classList.add('hidden');
+                        document.getElementById('main-footer').classList.add('hidden');
+                    }
+                });
+            },
+
+            showMainApp: (user) => {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('main-header').classList.remove('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('main-footer').classList.remove('hidden');
+
+                document.getElementById('display-user-nick').innerText = currentNick;
+
+                if(user.uid === ADMIN_UID) {
+                    document.getElementById('admin-indicator').classList.remove('hidden');
+                    document.getElementById('btn-open-admin').classList.remove('hidden');
+                    document.getElementById('main-body').classList.add('admin-active');
+                }
+
+                if (!appInitialized) {
+                    core.initApp(); 
+                    appInitialized = true;
+                }
+            },
+            
         
         // ZMIENNA PRZECHOWUJĄCA ZAPISANY NICK
         let currentNick = "Użytkownik"; 
