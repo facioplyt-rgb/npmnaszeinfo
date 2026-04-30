@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ełk Nasze Wiadomości</title>
     
+    <!-- STYLE I CZCIONKI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
+    <!-- BIBLIOTEKI FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
 
+    <!-- ZABEZPIECZENIE PRZED XSS (WIRUSAMI W TEKŚCIE) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
     <style>
@@ -30,17 +33,48 @@
         .category-tag { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; }
         .like-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
         .comment-item { border-left: 2px solid var(--main); background: rgba(255,255,255,0.02); padding: 10px 15px; border-radius: 0 12px 12px 0; margin-bottom: 10px; position: relative; }
-        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; }
+        .del-comm-btn { position: absolute; right: 10px; top: 10px; color: #ef4444; font-size: 10px; font-weight: 900; border: 1px solid rgba(239, 68, 68, 0.2); padding: 2px 8px; border-radius: 5px; display: none; cursor: pointer; text-transform: uppercase; }
         body.admin-active .del-comm-btn { display: block; }
-        .ad-box { width: 100%; height: 500px; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; display: none; }
-        .ad-box.active { display: block; }
+        .ad-box { width: 100%; height: 500px; background: #161c2d; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; display: none; margin-bottom: 15px; transition: 0.5s ease; }
+        .ad-box.active { display: block; animation: fadeIn 0.5s; }
         .ad-box img { width: 100%; height: 100%; object-fit: cover; }
-        .toast { position: fixed; top: 80px; right: 20px; background: #1e293b; border-left: 4px solid var(--main); color: white; padding: 15px 25px; border-radius: 8px; transform: translateX(120%); transition: 0.5s; z-index: 1000; }
+        .toast { position: fixed; top: 80px; right: 20px; background: #1e293b; border-left: 4px solid var(--main); color: white; padding: 15px 25px; border-radius: 8px; transform: translateX(120%); transition: 0.5s; z-index: 1000; font-weight: 700; font-size: 12px; }
         .toast.show { transform: translateX(0); }
+        .ad-container { position: fixed; top: 100px; width: 140px; min-height: 50px; z-index: 40; display: block; }
+        .ad-left { left: 10px; }
+        .ad-right { right: 10px; }
+        .no-ad-placeholder { font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.2); text-transform: uppercase; border: 2px dashed rgba(255,255,255,0.05); padding: 20px 10px; text-align: center; border-radius: 12px; }
+        .report-btn { font-size: 9px; font-weight: 900; color: #ef4444; text-transform: uppercase; cursor: pointer; opacity: 0.6; margin-left: auto; }
+        .report-btn:hover { opacity: 1; }
+        .reply-btn { font-size: 9px; font-weight: 900; color: var(--main); text-transform: uppercase; cursor: pointer; opacity: 0.6; }
+        .reply-btn:hover { opacity: 1; }
+        .comm-react-btn { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .comm-react-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .comm-react-btn.liked { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .replies-container { margin-left: 20px; border-left: 1px dashed rgba(255,255,255,0.1); padding-left: 15px; margin-top: 10px; display: none; }
+        .reply-item { background: rgba(255,255,255,0.01); padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; font-size: 13px; border: 1px solid rgba(255,255,255,0.02); position: relative; }
+        .toggle-replies { font-size: 9px; font-weight: 800; color: #64748b; cursor: pointer; text-transform: uppercase; margin-top: 5px; display: inline-block; }
+        .toggle-replies:hover { color: white; }
+        .notif-badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50px; margin-left: 5px; font-weight: 900; }
+        .notif-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+        .report-highlight { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
+        .preview-wrapper { position: relative; width: 60px; height: 60px; }
+        .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        .preview-del { position: absolute; -top: 5px; -right: 5px; background: red; color: white; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        .md-h1 { font-size: 2.25rem; font-weight: 900; display: block; margin: 1rem 0; color: white; line-height: 1.2; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .md-h3 { font-size: 1.5rem; font-weight: 700; display: block; margin: 0.75rem 0; color: #cbd5e1; }
+        .md-small { font-size: 0.85rem; opacity: 0.7; display: block; line-height: 1.4; color: #94a3b8; }
+        .md-u { text-decoration: underline; text-underline-offset: 3px; }
+        .tab-btn { padding: 10px 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: 12px; cursor: pointer; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05); color: #64748b; }
+        .tab-btn.active { background: var(--main); color: white; border-color: var(--main); box-shadow: 0 4px 15px rgba(0,98,255,0.3); }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: white; }
+        @media (max-width: 1279px) { .ad-container { position: static; width: 100%; max-width: 500px; margin: 0 auto 20px auto; padding: 0 10px; } .ad-box { height: 150px; } }
+        footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 40px 0; background: rgba(0,0,0,0.2); width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body id="main-body">
 
+    <!-- EKRAN LOGOWANIA -->
     <div id="auth-overlay" class="fixed inset-0 bg-[#0b0f1a] z-[100] flex flex-col items-center justify-center text-center p-6">
         <h1 class="text-4xl font-black italic mb-2 uppercase text-white">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
         <p class="text-slate-400 mb-8 text-sm">Zaloguj się kontem Google, aby przeglądać i komentować.</p>
@@ -50,22 +84,45 @@
     </div>
 
     <div id="toast-container"></div>
+    <div class="ad-container ad-left" id="ad-l-zone"></div>
+    <div class="ad-container ad-right" id="ad-r-zone"></div>
     <div id="loader"><div class="animate-spin text-4xl text-blue-500"><i class="fa-solid fa-circle-notch"></i></div></div>
 
+    <!-- NAGŁÓWEK -->
     <header class="sticky top-0 z-50 glass border-b border-white/5 mb-8 hidden" id="main-header">
         <div class="max-w-6xl mx-auto px-4 h-16 flex justify-between items-center">
             <h1 onclick="core.goHome()" class="text-xl font-black italic cursor-pointer uppercase">EŁK <span class="text-blue-500">NASZE</span> WIADOMOŚCI</h1>
             <div class="flex items-center gap-4">
-                <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
-                <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
-                <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">Panel</button>
+                
+                <div class="relative">
+                    <div id="notif-bell" onclick="core.toggleNotifMenu()" class="relative cursor-pointer text-slate-400 hover:text-white transition">
+                        <i class="fa-solid fa-bell text-lg"></i>
+                        <span id="global-notif-count" class="hidden absolute -top-2 -right-2 bg-red-600 text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-black">0</span>
+                    </div>
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-4 w-72 bg-[#161c2d] border border-white/10 rounded-2xl shadow-2xl z-50 flex flex-col max-h-80 overflow-y-auto">
+                        <div class="p-3 border-b border-white/5 text-[10px] font-black uppercase text-slate-400 flex justify-between items-center sticky top-0 bg-[#161c2d] z-10">
+                            <span>Powiadomienia</span><span onclick="core.clearNotifs()" class="cursor-pointer hover:text-red-500 transition">Wyczyść</span>
+                        </div>
+                        <div id="notif-list" class="flex flex-col"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
+                    <button onclick="core.logout()" class="text-[10px] font-bold uppercase text-red-500 hover:text-red-400 transition">Wyloguj</button>
+                    <span id="admin-indicator" class="hidden text-[9px] bg-green-500/20 text-green-500 px-2 py-1 rounded-md font-black uppercase tracking-tighter">Admin</span>
+                    <button id="btn-open-admin" onclick="core.openAdmin()" class="hidden text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 transition">Panel</button>
+                </div>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 min-h-screen hidden" id="main-content">
+        <!-- WYSZUKIWARKA -->
         <div id="search-area" class="mb-8 space-y-6">
-            <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="search-input" oninput="core.filterPosts()" placeholder="Szukaj wiadomości..." class="input-dark pl-12">
+            </div>
             <div class="flex flex-wrap gap-2 items-center border-b border-white/5 pb-4">
                 <button onclick="core.switchTab('all', this)" class="tab-btn active">Wszystkie</button>
                 <button onclick="core.switchTab('Wydarzenia', this)" class="tab-btn">Wydarzenia</button>
@@ -74,43 +131,151 @@
             </div>
         </div>
 
-        <div id="view-home">
-            <div id="news-container" class="space-y-4"></div>
+        <!-- LISTA WPISÓW -->
+        <div id="view-home" class="pb-5">
+            <div id="news-container" class="space-y-4">
+                <div class="text-center py-20 text-slate-600 italic tracking-widest uppercase text-xs">Wczytywanie bazy...</div>
+            </div>
+            <div id="more-container" class="mt-8 hidden flex justify-center pb-10">
+                <button onclick="core.showAllPosts()" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 rounded-full font-bold text-sm transition border border-white/5 uppercase tracking-tighter">Pokaż wszystkie pozostałe</button>
+            </div>
         </div>
 
+        <!-- WIDOK ARTYKUŁU -->
         <div id="view-article" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold uppercase text-xs tracking-widest">Wstecz</button>
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wstecz</button>
             <div id="article-content"></div>
-            <div class="mt-12 pt-12 border-t border-white/10">
-                <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full w-max cursor-pointer">
-                    <i class="fa-solid fa-heart text-xl"></i> <span id="like-count" class="font-black">0</span>
+            
+            <div id="article-interaction" class="mt-12 pt-12 border-t border-white/10">
+                <div class="flex items-center gap-6 mb-10">
+                    <div id="main-like-btn" onclick="core.likePost()" class="like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition">
+                        <i class="fa-solid fa-heart text-xl"></i><span id="like-count" class="font-black">0</span>
+                    </div>
                 </div>
-                <h3 class="text-xl font-black uppercase italic my-6">Komentarze</h3>
-                <div id="comments-list" class="space-y-4"></div>
-                <div class="glass p-6 rounded-[24px] mt-8 space-y-4">
-                    <input type="text" id="comm-nick" placeholder="Twój nick" class="input-dark">
-                    <textarea id="comm-text" rows="3" placeholder="Treść komentarza..." class="input-dark"></textarea>
-                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition">Wyślij</button>
+
+                <h3 class="text-xl font-black uppercase italic mb-6">Komentarze</h3>
+                <div id="comments-list" class="space-y-4 mb-8"></div>
+                
+                <div id="comment-box-anchor" class="glass p-6 rounded-[24px] space-y-4 border border-blue-500/20">
+                    <div id="replying-to-info" class="hidden flex justify-between items-center bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                        <span class="text-[10px] font-bold uppercase">Odpowiadasz użytkownikowi: <span id="target-nick" class="text-blue-400"></span></span>
+                        <button onclick="core.cancelReply()" class="text-red-500 text-[10px] font-black uppercase">Anuluj</button>
+                    </div>
+                    <input type="text" id="comm-nick" placeholder="Podaj swój nick (wymagane)" class="input-dark">
+                    <textarea id="comm-text" rows="3" placeholder="Napisz co o tym sądzisz..." class="input-dark"></textarea>
+                    <button onclick="core.addComment()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-500/20">Wyślij</button>
                 </div>
             </div>
         </div>
 
-        <div id="view-admin" class="hidden pb-20">
-            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold uppercase text-xs tracking-widest">Powrót</button>
-            <div class="glass p-8 rounded-[30px] space-y-4">
-                <h2 class="text-xl font-bold uppercase">Nowy Wpis</h2>
-                <input type="text" id="in-title" placeholder="Tytuł" class="input-dark">
-                <input type="text" id="in-author" placeholder="Autor" class="input-dark">
-                <textarea id="in-content" rows="6" placeholder="Treść (Markdown)..." class="input-dark"></textarea>
-                <input type="file" id="in-files" multiple accept="image/*" class="text-xs">
-                <button onclick="core.publish()" class="bg-blue-600 w-full p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
+        <!-- WIDOK LEGALNY (REGULAMINY) -->
+        <div id="view-legal" class="hidden pb-20">
+            <button onclick="core.goHome()" class="mb-8 text-slate-400 font-bold flex items-center gap-2 hover:text-white transition uppercase text-xs tracking-widest"><i class="fa-solid fa-arrow-left"></i> Wróć do strony głównej</button>
+            <div class="glass p-10 rounded-[40px] border border-blue-500/10 shadow-2xl">
+                <h2 id="legal-title" class="text-3xl font-black uppercase italic mb-6 text-blue-500 tracking-tighter"></h2>
+                <div id="legal-body" class="text-slate-300 leading-relaxed white-pre text-lg"></div>
             </div>
-            <div id="admin-list" class="mt-10 space-y-2"></div>
+        </div>
+
+        <footer id="main-footer" class="max-w-full hidden">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-sm px-4">
+                <div>
+                    <h4 class="font-black uppercase mb-4 text-blue-500">O Serwisie</h4>
+                    <p id="txt-about" class="text-slate-400 leading-relaxed">Portal informacyjny miasta Ełk.</p>
+                </div>
+                <div>
+                    <h4 class="font-black uppercase mb-4">Informacje</h4>
+                    <ul class="text-slate-400 space-y-2">
+                        <li><a href="javascript:void(0)" onclick="core.showLegal('redaction')" class="hover:text-white">Redakcja</a></li>
+                        <li><a href="javascript:void(0)" onclick="core.showLegal('privacy')" class="hover:text-white">Polityka Prywatności</a></li>
+                        <li><a href="javascript:void(0)" onclick="core.showLegal('coop')" class="hover:text-white">Współpraca</a></li>
+                        <div class="hidden" id="legal-data-store"><span id="txt-redaction"></span><span id="txt-privacy"></span><span id="txt-coop"></span></div>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-black uppercase mb-4">Linki</h4>
+                    <ul class="text-slate-400 space-y-2 mb-4">
+                        <li><a href="https://www.roblox.com/games/129703056949448/North-Poland-Masuria" target="_blank" class="hover:text-blue-400">Roblox</a></li>
+                        <li><a href="https://www.tiktok.com/@diamentowy337" target="_blank" class="hover:text-pink-500">TikTok</a></li>
+                        <li><a href="http://www.youtube.com/@Diamentowy_337" target="_blank" class="hover:text-red-500">YouTube</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center mt-12 text-[10px] text-slate-600 uppercase tracking-widest flex flex-col gap-1">
+                <span>facio® &copy; 2024 Wszystkie prawa zastrzeżone</span>
+                <span class="text-blue-500/50 font-bold"><i class="fa-solid fa-cloud"></i> Dane chronione przez Firebase Auth</span>
+            </div>
+        </footer>
+
+        <!-- PANEL ADMINA -->
+        <div id="view-admin" class="hidden pb-20">
+            <button onclick="core.goHome()" class="mb-6 text-blue-500 font-bold flex items-center gap-2 hover:text-white transition uppercase text-[10px] tracking-widest"><i class="fa-solid fa-house"></i> Powrót do strony głównej</button>
+
+            <div class="flex flex-wrap gap-4 mb-8">
+                <button onclick="core.setAdminTab('new')" id="btn-adm-new" class="tab-btn active">Wpisy</button>
+                <button onclick="core.setAdminTab('comms')" id="btn-adm-comms" class="tab-btn">Komentarze</button>
+                <button onclick="core.setAdminTab('notifs')" id="btn-adm-notifs" class="tab-btn">Zgłoszenia <span id="notif-count" class="hidden notif-badge">0</span></button>
+                <button onclick="core.setAdminTab('ads')" id="btn-adm-ads" class="tab-btn">Reklamy</button>
+                <button onclick="core.setAdminTab('settings')" id="btn-adm-settings" class="tab-btn">Ustawienia</button>
+            </div>
+
+            <div id="admin-new-section" class="max-w-xl mx-auto glass p-8 rounded-[30px] shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="admin-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Nowy Wpis</h2>
+                    <button onclick="core.cancelEdit()" id="cancel-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="in-title" placeholder="Tytuł wiadomości" class="input-dark">
+                    <input type="text" id="in-author" placeholder="Autor" class="input-dark">
+                    <div class="grid grid-cols-2 gap-4">
+                        <select id="in-category" class="input-dark bg-slate-900">
+                            <option value="Wydarzenia">Wydarzenia</option><option value="Aktualizacje">Aktualizacje</option><option value="Informacje">Informacje</option>
+                        </select>
+                        <input type="text" id="in-date" placeholder="Data (puste = dziś)" class="input-dark text-xs">
+                    </div>
+                    <textarea id="in-content" rows="10" placeholder="Treść..." class="input-dark"></textarea>
+                    
+                    <div class="p-4 bg-white/5 rounded-xl border border-white/10">
+                        <input type="file" id="in-files" onchange="core.previewNewFiles()" multiple accept="image/*" class="text-xs mb-3">
+                        <div id="edit-images-preview" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <button onclick="core.publish()" id="publish-btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold uppercase tracking-widest">Opublikuj</button>
+                    <div id="admin-list" class="mt-10 space-y-2"></div>
+                </div>
+            </div>
+
+            <div id="admin-comms-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6">Komentarze i Odpowiedzi</h2><div id="all-comms-list"></div></div>
+            <div id="admin-notifs-section" class="hidden max-w-2xl mx-auto space-y-4"><h2 class="text-xl font-bold italic uppercase tracking-tighter mb-6 text-red-500">Zgłoszenia</h2><div id="reports-list"></div></div>
+
+            <div id="admin-ads-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="ad-mode-title" class="text-xl font-bold italic uppercase tracking-tighter">Zarządzaj Reklamami</h2>
+                    <button onclick="core.cancelAdEdit()" id="cancel-ad-edit-btn" class="hidden text-red-500 text-[10px] font-bold uppercase border border-red-500/30 px-3 py-1 rounded-full">Anuluj</button>
+                </div>
+                <div class="p-6 border border-white/10 rounded-2xl space-y-4 bg-white/5">
+                    <select id="ad-side" class="input-dark bg-slate-900 text-sm"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select>
+                    <input type="file" id="ad-file" accept="image/*" class="text-xs">
+                    <input type="text" id="ad-target" placeholder="Link docelowy (URL)" class="input-dark text-sm">
+                    <button onclick="core.publishAd()" id="ad-publish-btn" class="bg-blue-600 w-full py-3 rounded-lg font-bold text-xs uppercase tracking-widest">Zapisz Reklamę</button>
+                </div>
+                <div id="admin-ads-list" class="space-y-3"></div>
+            </div>
+
+            <div id="admin-settings-section" class="hidden max-w-xl mx-auto glass p-8 rounded-[30px] space-y-6">
+                <h2 class="text-xl font-bold italic uppercase tracking-tighter">Ustawienia Serwisu (Chmura)</h2>
+                <div class="space-y-4">
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">O Serwisie (Stopka):</label><textarea id="set-about" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Redakcja:</label><textarea id="set-redaction" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Polityka Prywatności:</label><textarea id="set-privacy" rows="3" class="input-dark text-sm"></textarea></div>
+                    <div><label class="text-[10px] font-bold text-blue-400 uppercase">Współpraca:</label><textarea id="set-coop" rows="3" class="input-dark text-sm"></textarea></div>
+                    <button onclick="core.saveSettings()" class="bg-blue-600 w-full py-4 rounded-xl font-bold uppercase tracking-widest">Zapisz ustawienia w chmurze</button>
+                </div>
+            </div>
         </div>
     </main>
 
     <script>
-       // ======= TWOJE POPRAWNE DANE KONFIGURACYJNE =======
+        // ======= TWOJE POPRAWNE DANE KONFIGURACYJNE =======
         const firebaseConfig = {
             apiKey: "AIzaSyCb5QmZdwWwa9LafqqGZvGW-6vblkab32M",
             authDomain: "mzk-by-facio.firebaseapp.com",
@@ -131,119 +296,611 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
+        
         const postsRef = db.ref('elk/posts');
-        const commentsRef = db.ref('elk/comments');
+        const reportsRef = db.ref('elk/reports');
+        const commentsRootRef = db.ref('elk/comments');
+        const adsRef = db.ref('elk/ads');
+        const settingsRef = db.ref('elk/settings');
 
         let allData = [];
+        let allAds = [];
+        let adIndices = { left: 0, right: 0 };
+        let showLimit = 3;
+        let editId = null;
+        let adEditId = null;
         let currentOpenPostId = null;
+        let currentReplyToId = null;
+        let currentEditImages = [];
+        let currentTab = 'all';
+        let appInitialized = false; // Flaga blokująca podwójne uruchomienie
 
         window.core = {
+            // LOGOWANIE - STABILNA METODA POPUP
             login: () => {
+                console.log("[LOGOWANIE] Uruchamiam okienko Google...");
                 const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithRedirect(provider);
+                auth.signInWithPopup(provider).then((result) => {
+                    console.log("[LOGOWANIE] Sukces! Zalogowano jako:", result.user.email);
+                }).catch(err => {
+                    console.error("[BŁĄD LOGOWANIA]:", err.message);
+                    alert("Błąd logowania: " + err.message);
+                });
             },
-            logout: () => auth.signOut().then(() => location.reload()),
+            
+            logout: () => {
+                auth.signOut().then(() => location.reload());
+            },
+            
+            // SPRAWDZANIE ZALOGOWANIA Z KONSOLĄ
             checkAuth: () => {
+                console.log("[AUTH] Uruchamiam nasłuchiwanie statusu użytkownika...");
                 auth.onAuthStateChanged(user => {
                     if (user) {
+                        console.log("[AUTH] Wykryto zalogowanego użytkownika.");
                         document.getElementById('auth-overlay').classList.add('hidden');
                         document.getElementById('main-header').classList.remove('hidden');
                         document.getElementById('main-content').classList.remove('hidden');
                         document.getElementById('main-footer').classList.remove('hidden');
+
                         if(user.uid === ADMIN_UID) {
+                            console.log("[AUTH] Rozpoznano Właściciela (Admina). Aktywuję panel.");
                             document.getElementById('admin-indicator').classList.remove('hidden');
                             document.getElementById('btn-open-admin').classList.remove('hidden');
                             document.getElementById('main-body').classList.add('admin-active');
                         }
-                        core.loadData();
+
+                        if (!appInitialized) {
+                            core.initApp(); 
+                            appInitialized = true;
+                        }
+                    } else {
+                        console.log("[AUTH] Brak aktywnej sesji. Ekran logowania jest widoczny.");
+                        document.getElementById('auth-overlay').classList.remove('hidden');
+                        document.getElementById('main-header').classList.add('hidden');
+                        document.getElementById('main-content').classList.add('hidden');
+                        document.getElementById('main-footer').classList.add('hidden');
                     }
                 });
             },
-            loadData: () => {
+
+            initApp: () => {
                 postsRef.on('value', snap => {
                     const data = snap.val(); allData = [];
-                    const adminList = document.getElementById('admin-list'); if(adminList) adminList.innerHTML = "";
+                    const admList = document.getElementById('admin-list'); if(admList) admList.innerHTML = "";
                     if(data) {
                         Object.entries(data).sort((a,b) => b[1].ts - a[1].ts).forEach(([id, v]) => {
                             allData.push({ id, ...v });
-                            if(adminList) adminList.innerHTML += `<div class="bg-white/5 p-2 flex justify-between"><span>${v.title}</span><button onclick="core.deletePost('${id}')" class="text-red-500">Usuń</button></div>`;
+                            if(admList) admList.innerHTML += `<div class="flex justify-between bg-white/5 p-2 rounded-xl"><span>${DOMPurify.sanitize(v.title)}</span><div class="flex gap-2"><button onclick="core.editMode('${id}')" class="text-amber-500 text-[10px]">EDYCJA</button><button onclick="core.deletePost('${id}')" class="text-red-500 text-[10px]">USUŃ</button></div></div>`;
                         });
                     }
                     core.filterPosts();
                 });
+
+                adsRef.on('value', snap => {
+                    const data = snap.val(); allAds = [];
+                    const zones = { left: document.getElementById('ad-l-zone'), right: document.getElementById('ad-r-zone') };
+                    const adAdminList = document.getElementById('admin-ads-list');
+                    if (zones.left) zones.left.innerHTML = ""; 
+                    if (zones.right) zones.right.innerHTML = ""; 
+                    if (adAdminList) adAdminList.innerHTML = "";
+                    if(data) {
+                        Object.entries(data).forEach(([id, ad]) => {
+                            allAds.push({ id, ...ad });
+                            const adHtml = `<a href="${DOMPurify.sanitize(ad.link)}" target="_blank" class="ad-box"><img src="${ad.img}"></a>`;
+                            if (zones[ad.side]) zones[ad.side].innerHTML += adHtml;
+                            if (adAdminList) adAdminList.innerHTML += `<div class="flex items-center gap-3 bg-white/5 p-2 rounded-lg"><img src="${ad.img}" class="w-10 h-10 object-cover rounded"><div class="flex-1 text-[10px] truncate"><span class="font-bold text-blue-400 uppercase">${ad.side}</span><br>${DOMPurify.sanitize(ad.link)}</div><div class="flex gap-2"><button onclick="core.editAd('${id}')" class="text-amber-500 text-[9px] font-bold">EDYTUJ</button><button onclick="core.deleteAd('${id}')" class="text-red-500 text-[9px] font-bold">USUŃ</button></div></div>`;
+                        });
+                        ['left', 'right'].forEach(s => {
+                            if (!zones[s]) return;
+                            const first = zones[s].querySelector('.ad-box');
+                            if(first) first.classList.add('active');
+                            else zones[s].innerHTML = `<div class="no-ad-placeholder">Brak reklamy (${s})</div>`;
+                        });
+                    } else {
+                        if (zones.left) zones.left.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Lewa)</div>';
+                        if (zones.right) zones.right.innerHTML = '<div class="no-ad-placeholder">Brak reklamy (Prawa)</div>';
+                    }
+                });
+
+                settingsRef.on('value', snap => {
+                    const d = snap.val(); if(!d) return;
+                    const txtAbout = document.getElementById('txt-about');
+                    const txtRedaction = document.getElementById('txt-redaction');
+                    const txtPrivacy = document.getElementById('txt-privacy');
+                    const txtCoop = document.getElementById('txt-coop');
+                    if(txtAbout) txtAbout.innerText = DOMPurify.sanitize(d.about) || "Portal informacyjny...";
+                    if(txtRedaction) txtRedaction.innerText = DOMPurify.sanitize(d.redaction) || "Brak danych.";
+                    if(txtPrivacy) txtPrivacy.innerText = DOMPurify.sanitize(d.privacy) || "Brak danych.";
+                    if(txtCoop) txtCoop.innerText = DOMPurify.sanitize(d.coop) || "Brak danych.";
+                });
+
+                reportsRef.on('value', s => {
+                    const c = s.val() ? Object.keys(s.val()).length : 0;
+                    const el = document.getElementById('notif-count');
+                    if(el) { el.innerText = c; el.classList.toggle('hidden', c === 0); }
+                });
+
+                core.initNotifications();
+                setInterval(core.rotateAds, 5000);
             },
+
+            toggleNotifMenu: () => { document.getElementById('notif-dropdown').classList.toggle('hidden'); },
+
+            loadNotifications: () => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                const list = document.getElementById('notif-list');
+                if(!list) return;
+                list.innerHTML = "";
+                let unreadCount = 0;
+
+                if (notifs.length === 0) {
+                    list.innerHTML = '<div class="p-6 text-center text-[10px] uppercase font-bold text-slate-500">Brak powiadomień</div>';
+                } else {
+                    notifs.forEach(n => {
+                        if (!n.read) unreadCount++;
+                        const bgClass = n.read ? 'opacity-50' : 'bg-white/5';
+                        const dot = n.read ? '' : '<div class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>';
+                        let icon = '<i class="fa-solid fa-info-circle text-blue-500"></i>';
+                        if (n.type === 'like') icon = '<i class="fa-solid fa-heart text-red-500"></i>';
+                        if (n.type === 'reply') icon = '<i class="fa-solid fa-reply text-green-500"></i>';
+
+                        list.innerHTML += `
+                            <div onclick="core.clickNotif(${n.id}, '${n.postId}')" class="flex items-center gap-3 p-4 border-b border-white/5 cursor-pointer hover:bg-white/10 transition ${bgClass}">
+                                <div class="text-lg w-6 text-center">${icon}</div>
+                                <div class="flex-1 text-[11px] text-slate-200 leading-tight">${DOMPurify.sanitize(n.msg)}</div>
+                                ${dot}
+                            </div>
+                        `;
+                    });
+                }
+                const badge = document.getElementById('global-notif-count');
+                if(badge) { badge.innerText = unreadCount; badge.classList.toggle('hidden', unreadCount === 0); }
+            },
+
+            addNotification: (msg, type, postId) => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                notifs.unshift({ id: Date.now(), msg, type, postId, read: false, ts: Date.now() });
+                localStorage.setItem('my_notifs', JSON.stringify(notifs.slice(0, 30)));
+                core.showToast(msg, type);
+                core.loadNotifications();
+            },
+
+            clickNotif: (id, postId) => {
+                const notifs = JSON.parse(localStorage.getItem('my_notifs') || "[]");
+                const notif = notifs.find(n => n.id === id);
+                if (notif) {
+                    notif.read = true;
+                    localStorage.setItem('my_notifs', JSON.stringify(notifs));
+                    core.loadNotifications();
+                }
+                document.getElementById('notif-dropdown').classList.add('hidden');
+                if (postId) {
+                    const postData = allData.find(x => x.id === postId);
+                    if (postData) core.showFull(postData);
+                }
+            },
+
+            clearNotifs: () => {
+                localStorage.setItem('my_notifs', "[]");
+                core.loadNotifications();
+            },
+
+            showToast: (msg, type = 'info') => {
+                const container = document.getElementById('toast-container');
+                if(!container) return;
+                const t = document.createElement('div');
+                t.className = `toast toast-${type}`;
+                t.innerText = msg;
+                container.appendChild(t);
+                setTimeout(() => t.classList.add('show'), 100);
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 500); }, 5000);
+            },
+
+            initNotifications: () => {
+                const lastExit = parseInt(localStorage.getItem('user_last_exit') || Date.now());
+                let notifiedPosts = []; 
+                postsRef.on('child_added', snap => {
+                    const post = snap.val();
+                    const pid = snap.key;
+                    if(post.ts > lastExit && !notifiedPosts.includes(pid)) {
+                        notifiedPosts.push(pid);
+                        core.addNotification(`Nowa wiadomość: ${post.title}`, 'info', pid);
+                    }
+                });
+
+                const myComms = JSON.parse(localStorage.getItem('my_comments') || "[]");
+                myComms.forEach(item => {
+                    db.ref(`elk/comments/${item.pId}/${item.cId}`).on('value', snap => {
+                        const data = snap.val();
+                        if(!data) return;
+                        if(data.reacts > (item.rCount || 0)) {
+                            item.rCount = data.reacts; 
+                            core.saveMyComms(myComms); 
+                            core.addNotification(`Ktoś polubił Twój komentarz!`, 'like', item.pId);
+                        }
+                        const reps = data.replies ? Object.keys(data.replies).length : 0;
+                        if(reps > (item.repCount || 0)) {
+                            item.repCount = reps; 
+                            core.saveMyComms(myComms); 
+                            core.addNotification(`Ktoś odpowiedział na Twój komentarz!`, 'reply', item.pId);
+                        }
+                    });
+                });
+                window.addEventListener('beforeunload', () => { localStorage.setItem('user_last_exit', Date.now().toString()); });
+                core.loadNotifications(); 
+            },
+
+            saveMyComms: (arr) => localStorage.setItem('my_comments', JSON.stringify(arr)),
+
+            parseMarkdown: (text) => {
+                if(!text) return "";
+                let html = DOMPurify.sanitize(text); 
+                html = html.replace(/^#\s+(.*)$/gm, '<span class="md-h1">$1</span>').replace(/^###\s+(.*)$/gm, '<span class="md-h3">$1</span>').replace(/^-#\s+(.*)$/gm, '<span class="md-small">$1</span>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/__(.*?)__/g, '<span class="md-u">$1</span>').replace(/\*(.*?)\*/g, '<em>$1</em>');
+                return html;
+            },
+
+            previewNewFiles: () => {
+                const files = document.getElementById('in-files').files;
+                core.renderEditImages(files);
+            },
+
+            switchTab: (tabId, btn) => {
+                currentTab = tabId;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                window.scrollTo(0, 0);
+                core.filterPosts();
+            },
+
+            setAdminTab: (tab) => {
+                const sections = ['new', 'comms', 'notifs', 'ads', 'settings'];
+                sections.forEach(s => {
+                    const el = document.getElementById(`admin-${s}-section`);
+                    if(el) el.classList.toggle('hidden', tab !== s);
+                });
+                document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
+                const btn = document.getElementById(`btn-adm-${tab}`);
+                if(btn) btn.classList.add('active');
+                if(tab === 'comms') core.loadAllCommentsAdmin();
+                if(tab === 'settings') core.loadSettingsInAdmin();
+            },
+
             goHome: () => {
                 document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('search-area').classList.remove('hidden');
                 document.getElementById('view-article').classList.add('hidden');
                 document.getElementById('view-admin').classList.add('hidden');
+                document.getElementById('view-legal').classList.add('hidden');
+                core.cancelEdit(); core.cancelReply();
+                currentOpenPostId = null; window.scrollTo(0,0);
+            },
+
+            openAdmin: () => {
+                if(auth.currentUser && auth.currentUser.uid === ADMIN_UID) {
+                    document.getElementById('view-home').classList.add('hidden');
+                    document.getElementById('search-area').classList.add('hidden');
+                    document.getElementById('view-admin').classList.remove('hidden');
+                    core.loadReports();
+                } else { 
+                    alert("Odmowa dostępu! Tylko właściciel może otworzyć ten panel."); 
+                }
+            },
+
+            showLegal: (type) => {
+                const titles = { redaction: "Redakcja", privacy: "Polityka Prywatności", coop: "Współpraca" };
+                const content = document.getElementById(`txt-${type}`).innerText;
+                document.getElementById('legal-title').innerText = titles[type];
+                document.getElementById('legal-body').innerText = content;
+                document.getElementById('view-home').classList.add('hidden');
+                document.getElementById('search-area').classList.add('hidden');
+                document.getElementById('view-article').classList.add('hidden');
+                document.getElementById('view-admin').classList.add('hidden');
+                document.getElementById('view-legal').classList.remove('hidden');
                 window.scrollTo(0,0);
             },
-            openAdmin: () => {
-                document.getElementById('view-home').classList.add('hidden');
-                document.getElementById('view-admin').classList.remove('hidden');
+
+            saveSettings: () => {
+                const data = {
+                    about: document.getElementById('set-about').value,
+                    redaction: document.getElementById('set-redaction').value,
+                    privacy: document.getElementById('set-privacy').value,
+                    coop: document.getElementById('set-coop').value
+                };
+                settingsRef.set(data).then(() => alert("Zapisano w chmurze!"));
             },
+
+            loadSettingsInAdmin: () => {
+                settingsRef.once('value', s => {
+                    const d = s.val(); if(!d) return;
+                    document.getElementById('set-about').value = d.about || "";
+                    document.getElementById('set-redaction').value = d.redaction || "";
+                    document.getElementById('set-privacy').value = d.privacy || "";
+                    document.getElementById('set-coop').value = d.coop || "";
+                });
+            },
+
+            publishAd: async () => {
+                const side = document.getElementById('ad-side').value;
+                const file = document.getElementById('ad-file').files[0];
+                const target = document.getElementById('ad-target').value;
+                if(!target) return alert("Podaj link!");
+                if(!adEditId && !file) return alert("Wybierz zdjęcie!");
+                document.getElementById('loader').style.display = 'flex';
+                
+                let imgUrl = adEditId ? allAds.find(x => x.id === adEditId).img : "";
+                
+                if(file) {
+                    const fd = new FormData(); 
+                    fd.append("image", file);
+                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                    const d = await r.json(); 
+                    if(d.success) imgUrl = d.data.url;
+                }
+
+                const data = { side, img: imgUrl, link: target, ts: Date.now() };
+                const act = adEditId ? adsRef.child(adEditId).update(data) : adsRef.push(data);
+                act.then(() => { core.cancelAdEdit(); document.getElementById('loader').style.display = 'none'; });
+            },
+
+            editAd: (id) => {
+                const ad = allAds.find(x => x.id === id); adEditId = id;
+                document.getElementById('ad-side').value = ad.side;
+                document.getElementById('ad-target').value = ad.link;
+                document.getElementById('ad-mode-title').innerText = "Edytuj Reklamę";
+                document.getElementById('cancel-ad-edit-btn').classList.remove('hidden');
+            },
+
+            deleteAd: (id) => confirm("Usunąć?") && adsRef.child(id).remove(),
+            cancelAdEdit: () => { 
+                adEditId = null; document.getElementById('ad-target').value = ""; 
+                document.getElementById('ad-mode-title').innerText = "Zarządzaj Reklamami";
+                document.getElementById('cancel-ad-edit-btn').classList.add('hidden');
+            },
+
+            renderEditImages: (newFiles = []) => {
+                const container = document.getElementById('edit-images-preview'); container.innerHTML = "";
+                currentEditImages.forEach((url, index) => {
+                    container.innerHTML += `<div class="preview-wrapper"><img src="${url}"><div class="preview-del" onclick="core.removeImageFromEdit(${index})">x</div></div>`;
+                });
+                Array.from(newFiles).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const div = document.createElement('div'); div.className = "preview-wrapper opacity-50";
+                        div.innerHTML = `<img src="${e.target.result}"><div class="absolute bottom-0 left-0 bg-blue-500 text-[8px] px-1 font-bold">LOKALNE</div>`;
+                        container.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            },
+
             publish: async () => {
                 const t = document.getElementById('in-title').value;
                 const c = document.getElementById('in-content').value;
+                const cat = document.getElementById('in-category').value;
                 const a = document.getElementById('in-author').value || "Redakcja";
+                const customDate = document.getElementById('in-date').value;
                 const files = document.getElementById('in-files').files;
-                if(!t || !c) return alert("Pola!");
+                if(!t || !c) return alert("Wypełnij pola!");
+                
                 document.getElementById('loader').style.display = 'flex';
-                let urls = [];
-                for(let f of files) {
-                    const fd = new FormData(); fd.append("image", f);
-                    const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
-                    const d = await r.json(); if(d.success) urls.push(d.data.url);
+                let newUrls = [];
+                
+                if(files.length > 0) {
+                    for(let f of files) {
+                        const fd = new FormData(); 
+                        fd.append("image", f);
+                        const r = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method: "POST", body: fd });
+                        const d = await r.json(); 
+                        if(d.success) newUrls.push(d.data.url);
+                    }
                 }
-                postsRef.push({ title: t, content: c, author: a, images: urls, ts: Date.now(), likes: 0, date: new Date().toLocaleString() });
-                document.getElementById('loader').style.display = 'none';
-                core.goHome();
+
+                const finalImgs = [...currentEditImages, ...newUrls];
+                const now = new Date().toLocaleString('pl-PL');
+                let data = { title: t, content: c, author: a, category: cat, images: finalImgs };
+                if(editId) {
+                    const old = allData.find(x => x.id === editId);
+                    data.date = customDate || old.date; data.ts = old.ts; data.likes = old.likes || 0;
+                } else { data.date = customDate || now; data.ts = Date.now(); data.likes = 0; }
+                const act = editId ? postsRef.child(editId).update(data) : postsRef.push(data);
+                act.then(() => location.reload());
             },
+
+            editMode: (id) => {
+                const p = allData.find(x => x.id === id); editId = id; 
+                currentEditImages = p.images ? [...p.images] : [];
+                document.getElementById('in-title').value = p.title;
+                document.getElementById('in-author').value = p.author;
+                document.getElementById('in-content').value = p.content;
+                document.getElementById('in-date').value = p.date;
+                document.getElementById('admin-mode-title').innerText = "Edytuj";
+                document.getElementById('cancel-edit-btn').classList.remove('hidden');
+                core.renderEditImages();
+            },
+
+            cancelEdit: () => {
+                editId = null; currentEditImages = [];
+                document.getElementById('in-title').value = ""; document.getElementById('in-content').value = "";
+                document.getElementById('admin-mode-title').innerText = "Nowy Wpis";
+                document.getElementById('cancel-edit-btn').classList.add('hidden');
+                document.getElementById('edit-images-preview').innerHTML = "";
+            },
+
             deletePost: (id) => confirm("Usunąć?") && postsRef.child(id).remove(),
+            showAllPosts: () => { showLimit = 999; core.renderPosts(allData); document.getElementById('more-container').classList.add('hidden'); window.scrollTo(0,0); },
+
             filterPosts: () => {
                 const term = document.getElementById('search-input').value.toLowerCase();
-                const items = allData.filter(p => p.title.toLowerCase().includes(term));
+                let f = allData;
+                if(currentTab !== 'all') f = f.filter(p => p.category === currentTab);
+                f = f.filter(p => p.title.toLowerCase().includes(term));
+                core.renderPosts(f, term !== "" || currentTab !== 'all');
+            },
+
+            renderPosts: (items, isSearch = false) => {
                 const container = document.getElementById('news-container'); container.innerHTML = "";
-                items.forEach(v => {
-                    const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer post-anim";
-                    card.innerHTML = `<h2 class="font-black text-xl">${DOMPurify.sanitize(v.title)}</h2><p class="text-xs opacity-50 mt-2">${v.author} | ${v.date}</p>`;
+                const toShow = isSearch ? items : items.slice(0, showLimit);
+                toShow.forEach(v => {
+                    const card = document.createElement('div'); card.className = "card glass p-6 rounded-2xl cursor-pointer mb-4 post-anim";
+                    card.innerHTML = `<div class="flex gap-5 flex-col md:flex-row">${v.images?.[0] ? `<img src="${v.images[0]}" class="w-full md:w-28 h-28 object-cover rounded-xl">` : ''}<div><span class="category-tag">${DOMPurify.sanitize(v.category || 'Wydarzenia')}</span><h2 class="font-black text-xl">${DOMPurify.sanitize(v.title)}</h2><div class="flex gap-3 mt-4"><span class="author-badge">${DOMPurify.sanitize(v.author)}</span><span class="text-[10px] text-red-500"><i class="fa-solid fa-heart"></i> ${v.likes || 0}</span></div></div></div>`;
                     card.onclick = () => core.showFull(v);
                     container.appendChild(card);
                 });
+                const moreCont = document.getElementById('more-container');
+                if(moreCont) moreCont.classList.toggle('hidden', isSearch || items.length <= showLimit);
             },
-            showFull: (v) => {
-                currentOpenPostId = v.id;
-                document.getElementById('view-home').classList.add('hidden');
-                document.getElementById('view-article').classList.remove('hidden');
-                document.getElementById('article-content').innerHTML = `<h1 class="text-3xl font-black mb-4">${DOMPurify.sanitize(v.title)}</h1><p class="text-slate-400 mb-8">${v.content}</p>${(v.images||[]).map(i=>`<img src="${i}" class="mb-4 rounded-xl">`).join('')}`;
-                document.getElementById('like-count').innerText = v.likes || 0;
-                core.loadComments(v.id);
-                window.scrollTo(0,0);
-            },
-            loadComments: (id) => {
-                db.ref(`elk/comments/${id}`).on('value', snap => {
-                    const list = document.getElementById('comments-list'); list.innerHTML = "";
-                    if(snap.val()) {
-                        Object.entries(snap.val()).forEach(([cid, c]) => {
-                            list.innerHTML += `<div class="comment-item"><span class="font-bold text-blue-400">${DOMPurify.sanitize(c.nick)}</span><p class="text-sm">${DOMPurify.sanitize(c.text)}</p></div>`;
-                        });
-                    }
+
+            likePost: () => {
+                const key = `liked_${currentOpenPostId}`; 
+                if(localStorage.getItem(key)) return alert("Już polubiono!");
+                const p = allData.find(x => x.id === currentOpenPostId);
+                const newLikes = (p.likes || 0) + 1;
+                postsRef.child(currentOpenPostId).update({ likes: newLikes }).then(() => {
+                    localStorage.setItem(key, "1"); 
+                    document.getElementById('main-like-btn').classList.add('liked');
+                    document.getElementById('like-count').innerText = newLikes;
                 });
             },
+
             addComment: () => {
-                const n = document.getElementById('comm-nick').value;
+                let n = document.getElementById('comm-nick').value.trim();
                 const t = document.getElementById('comm-text').value;
-                if(!n || !t) return alert("Pola!");
-                db.ref(`elk/comments/${currentOpenPostId}`).push({ nick: n, text: t, ts: Date.now() });
-                document.getElementById('comm-text').value = "";
+                if(!n || !t) return alert("Wypełnij oba pola!");
+
+                const forbidden = ["admin", "administrator", "redakcja", "facioyt", "facio"];
+                if (forbidden.includes(n.toLowerCase())) {
+                    if (auth.currentUser && auth.currentUser.uid !== ADMIN_UID) {
+                        return alert("Odmowa! Nie możesz użyć nicku zarezerwowanego dla administracji.");
+                    }
+                }
+                
+                const data = { nick: n, text: t, date: new Date().toLocaleString('pl-PL'), ts: Date.now(), reacts: 0 };
+                let ref = currentReplyToId ? db.ref(`elk/comments/${currentOpenPostId}/${currentReplyToId}/replies`) : db.ref(`elk/comments/${currentOpenPostId}`);
+                ref.push(data).then((snap) => { 
+                    if(!currentReplyToId) {
+                        const myComms = JSON.parse(localStorage.getItem('my_comments') || "[]");
+                        myComms.push({ pId: currentOpenPostId, cId: snap.key, rCount: 0, repCount: 0 });
+                        core.saveMyComms(myComms);
+                    }
+                    document.getElementById('comm-text').value = ""; 
+                    core.cancelReply(); 
+                });
             },
-            likePost: () => {
-                const p = allData.find(x => x.id === currentOpenPostId);
-                postsRef.child(currentOpenPostId).update({ likes: (p.likes || 0) + 1 });
+
+            setReply: (cid, nick) => {
+                currentReplyToId = cid; document.getElementById('replying-to-info').classList.remove('hidden');
+                document.getElementById('target-nick').innerText = DOMPurify.sanitize(nick);
+            },
+            cancelReply: () => { currentReplyToId = null; document.getElementById('replying-to-info').classList.add('hidden'); },
+
+            toggleReplies: (cid) => {
+                const el = document.getElementById(`replies-${cid}`);
+                if(el) el.style.display = el.style.display === "block" ? "none" : "block";
+            },
+
+            reportComment: (cid, text, nick, isReply = false, pId = null) => {
+                if(confirm("Zgłosić?")) reportsRef.push({ postId: currentOpenPostId, commentId: cid, parentId: pId, isReply, text, author: nick, date: new Date().toLocaleString('pl-PL') });
+            },
+
+            reactComment: (cid, isReply = false, pId = null) => {
+                const key = `re_${cid}`; if(localStorage.getItem(key)) return alert("Już zareagowano!");
+                let path = isReply ? `elk/comments/${currentOpenPostId}/${pId}/replies/${cid}/reacts` : `elk/comments/${currentOpenPostId}/${cid}/reacts`;
+                db.ref(path).transaction(c => (c || 0) + 1); localStorage.setItem(key, "1");
+            },
+
+            deleteComment: (cid, isReply, pId, postId) => {
+                if(!confirm("Usunąć?")) return;
+                const post = postId || currentOpenPostId;
+                let path = isReply ? `elk/comments/${post}/${pId}/replies/${cid}` : `elk/comments/${post}/${cid}`;
+                db.ref(path).remove();
+            },
+
+            dismissReport: (rid) => reportsRef.child(rid).remove(),
+
+            loadReports: () => {
+                reportsRef.on('value', snap => {
+                    const container = document.getElementById('reports-list'); container.innerHTML = "";
+                    if(!snap.val()) return;
+                    Object.entries(snap.val()).forEach(([rid, r]) => {
+                        container.innerHTML += `<div class="notif-card report-highlight"><p class="text-[10px] text-red-500 font-bold">${DOMPurify.sanitize(r.author)}:</p><p class="text-sm italic my-2">"${DOMPurify.sanitize(r.text)}"</p><div class="flex gap-2"><button onclick="core.deleteComment('${r.commentId}', ${r.isReply}, '${r.parentId}', '${r.postId}'); core.dismissReport('${rid}')" class="bg-red-600 px-3 py-1 rounded text-[9px] font-bold">USUŃ</button><button onclick="core.dismissReport('${rid}')" class="bg-slate-700 px-3 py-1 rounded text-[9px] font-bold">ODRZUĆ</button></div></div>`;
+                    });
+                });
+            },
+
+            loadAllCommentsAdmin: () => {
+                commentsRootRef.on('value', snap => {
+                    const container = document.getElementById('all-comms-list'); container.innerHTML = "";
+                    if(!snap.val()) return;
+                    Object.entries(snap.val()).forEach(([postId, comms]) => {
+                        Object.entries(comms).forEach(([cid, c]) => {
+                            container.innerHTML += `<div class="notif-card">
+                                <p class="text-[10px] text-blue-400 font-bold">${DOMPurify.sanitize(c.nick)} (ID Posta: ${postId}):</p>
+                                <p class="text-xs my-1">${DOMPurify.sanitize(c.text)}</p>
+                                <button onclick="core.deleteComment('${cid}', false, null, '${postId}')" class="text-red-500 text-[9px] font-bold">USUŃ KOMENTARZ</button>
+                            </div>`;
+                            if(c.replies) {
+                                Object.entries(c.replies).forEach(([rid, r]) => {
+                                    container.innerHTML += `<div class="notif-card ml-12 border-l-2 border-blue-600/30 bg-blue-600/5">
+                                        <p class="text-[10px] text-blue-300 font-bold italic">ODPOWIEDŹ OD: ${DOMPurify.sanitize(r.nick)}</p>
+                                        <p class="text-xs my-1">${DOMPurify.sanitize(r.text)}</p>
+                                        <button onclick="core.deleteComment('${rid}', true, '${cid}', '${postId}')" class="text-red-400 text-[9px] font-bold">USUŃ ODPOWIEDŹ</button>
+                                    </div>`;
+                                });
+                            }
+                        });
+                    });
+                });
+            },
+
+            loadComments: (postId) => {
+                db.ref(`elk/comments/${postId}`).on('value', snap => {
+                    const list = document.getElementById('comments-list'); list.innerHTML = "";
+                    if(!snap.val()) return;
+                    Object.entries(snap.val()).sort((a,b) => b[1].ts - a[1].ts).forEach(([cid, c]) => {
+                        let reps = ""; 
+                        if(c.replies) {
+                            Object.entries(c.replies).forEach(([rid, r]) => {
+                                reps += `<div class="reply-item"><button onclick="core.deleteComment('${rid}', true, '${cid}')" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-[11px]">${DOMPurify.sanitize(r.nick)}</span><p class="text-xs">${DOMPurify.sanitize(r.text)}</p><div class="flex gap-3 mt-1"><span onclick="core.reactComment('${rid}', true, '${cid}')" class="comm-react-btn scale-75"><i class="fa-solid fa-heart"></i> ${r.reacts || 0}</span><span onclick="core.reportComment('${rid}', '${DOMPurify.sanitize(r.text)}', '${DOMPurify.sanitize(r.nick)}', true, '${cid}')" class="report-btn">Zgłoś</span></div></div>`;
+                            });
+                        }
+                        list.innerHTML += `<div class="comment-item"><button onclick="core.deleteComment('${cid}', false)" class="del-comm-btn">Usuń</button><span class="font-black text-blue-400 text-xs">${DOMPurify.sanitize(c.nick)}</span><p class="text-sm">${DOMPurify.sanitize(c.text)}</p><div class="flex gap-4 mt-2"><span onclick="core.reactComment('${cid}')" class="comm-react-btn"><i class="fa-solid fa-heart"></i> ${c.reacts || 0}</span><span onclick="core.setReply('${cid}', '${DOMPurify.sanitize(c.nick)}')" class="reply-btn">Odpowiedz</span><span onclick="core.reportComment('${cid}', '${DOMPurify.sanitize(c.text)}', '${DOMPurify.sanitize(c.nick)}')" class="report-btn">Zgłoś</span>${c.replies ? `<span onclick="core.toggleReplies('${cid}')" class="toggle-replies">Pokaż odpowiedzi</span>`:''}</div><div id="replies-${cid}" class="replies-container">${reps}</div></div>`;
+                    });
+                });
+            },
+
+            showFull: (data) => {
+                currentOpenPostId = data.id;
+                document.getElementById('view-home').classList.add('hidden'); document.getElementById('search-area').classList.add('hidden');
+                document.getElementById('view-article').classList.remove('hidden');
+                
+                const isLiked = localStorage.getItem(`liked_${data.id}`) ? 'liked' : '';
+                document.getElementById('main-like-btn').className = `like-btn flex items-center gap-2 bg-white/5 px-6 py-3 rounded-full border border-white/5 transition ${isLiked}`;
+                document.getElementById('like-count').innerText = data.likes || 0;
+
+                core.loadComments(data.id);
+                document.getElementById('article-content').innerHTML = `<h1 class="text-4xl font-black mb-4">${DOMPurify.sanitize(data.title)}</h1><div class="flex gap-4 mb-8"><span class="author-badge">${DOMPurify.sanitize(data.author)}</span><span class="text-xs opacity-40">${DOMPurify.sanitize(data.date)}</span></div><div class="text-slate-300 text-lg white-pre border-l-4 border-blue-600 pl-6 mb-10">${core.parseMarkdown(data.content)}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">${(data.images||[]).map(i=>`<img src="${i}" class="w-full rounded-3xl">`).join('')}</div>`;
+                window.scrollTo(0,0);
+            },
+
+            rotateAds: () => {
+                const sides = ['left', 'right'];
+                sides.forEach(s => {
+                    const container = document.getElementById(`ad-${s[0]}-zone`);
+                    if (!container) return;
+                    const boxes = container.querySelectorAll('.ad-box');
+                    if(boxes.length > 1) {
+                        boxes.forEach(b => b.classList.remove('active'));
+                        adIndices[s] = (adIndices[s] + 1) % boxes.length;
+                        boxes[adIndices[s]].classList.add('active');
+                    }
+                });
             }
         };
 
+        // URUCHOMIENIE SPRAWDZANIA STANU LOGOWANIA NA STARCIE
         core.checkAuth();
+        
     </script>
 </body>
 </html>
